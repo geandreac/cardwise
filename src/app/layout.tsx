@@ -14,7 +14,7 @@ export const metadata: Metadata = {
     "Gerencie todos os seus cartões de crédito, acompanhe faturas e antecipe gastos com inteligência artificial.",
   keywords: ["cartão de crédito", "finanças pessoais", "gestão financeira", "fatura"],
   authors: [{ name: "CardWise" }],
-  robots: "noindex", // portfólio — não indexar em produção ainda
+  robots: "noindex",
 };
 
 export default function RootLayout({
@@ -24,7 +24,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR" className={inter.variable}>
-      <body className="antialiased">
+      <body className="antialiased min-h-dvh bg-[#020617] text-[#f8fafc]">
         {children}
       </body>
     </html>
