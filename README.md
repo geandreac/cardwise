@@ -1,36 +1,157 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CardWise 💳
 
-## Getting Started
+> Controle financeiro com inteligência. IA que lê suas faturas, projeta seus gastos e coloca você no controle dos seus cartões.
 
-First, run the development server:
+🔗 **[cardwise-eight.vercel.app](https://cardwise-eight.vercel.app)**
+
+***
+
+## Sobre o Projeto
+
+CardWise é uma aplicação web de gestão financeira pessoal com foco em cartões de crédito. O usuário pode acompanhar gastos, visualizar projeções e obter insights gerados por IA a partir das suas faturas.
+
+***
+
+## Stack
+
+| Camada | Tecnologia |
+|--------|------------|
+| Framework | [Next.js 14](https://nextjs.org/) (App Router) |
+| Linguagem | TypeScript |
+| Estilização | Tailwind CSS |
+| Backend / Auth / DB | [Supabase](https://supabase.com/) |
+| Validação de formulários | React Hook Form + Zod |
+| Ícones | Lucide React |
+| Deploy | [Vercel](https://vercel.com/) |
+
+***
+
+## Funcionalidades
+
+- 🔐 Autenticação com email/senha e login social via **Google OAuth**
+- 📊 Dashboard personalizado por usuário com dados isolados via **Row Level Security (RLS)**
+- 🤖 IA integrada para leitura e análise de faturas
+- 📈 Projeção de gastos e visão consolidada dos cartões
+- 🌙 Interface dark mode
+
+***
+
+## Pré-requisitos
+
+- Node.js 18+
+- Conta no [Supabase](https://supabase.com/)
+- Conta no [Vercel](https://vercel.com/) (para deploy)
+
+***
+
+## Instalação
+
+```bash
+# Clone o repositório
+git clone https://github.com/seu-usuario/cardwise.git
+cd cardwise
+
+# Instale as dependências
+npm install
+
+# Configure as variáveis de ambiente
+cp .env.example .env.local
+```
+
+***
+
+## Variáveis de Ambiente
+
+Crie um arquivo `.env.local` na raiz do projeto com as seguintes variáveis:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://<seu-projeto>.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=sua-anon-key-aqui
+```
+
+> ⚠️ **Nunca exponha a `SUPABASE_SERVICE_ROLE_KEY` no cliente.** Ela bypassa todas as políticas de RLS.
+
+***
+
+## Rodando localmente
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Acesse [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+***
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Deploy
 
-## Learn More
+### Via Vercel CLI
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm install -g vercel
+vercel --prod
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Via Git (recomendado)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Com o repositório conectado ao GitHub no painel da Vercel, o deploy acontece automaticamente a cada `git push` na branch principal.
 
-## Deploy on Vercel
+```bash
+git add .
+git commit -m "sua mensagem"
+git push
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Lembre de configurar as variáveis de ambiente também no painel da Vercel em **Settings → Environment Variables**.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+***
+
+## Autenticação com Google OAuth
+
+1. Crie um projeto no [Google Cloud Console](https://console.cloud.google.com/)
+2. Gere um **OAuth 2.0 Client ID** do tipo *Aplicativo da Web*
+3. Adicione em **URIs de redirecionamento autorizados**:
+   ```
+   https://<seu-projeto>.supabase.co/auth/v1/callback
+   ```
+4. Cole o **Client ID** e **Client Secret** no Supabase em **Authentication → Providers → Google**
+5. Configure o **Site URL** no Supabase para o domínio de produção
+
+***
+
+## Estrutura de Pastas
+
+```
+src/
+├── app/
+│   ├── api/
+│   │   └── auth/
+│   │       └── callback/
+│   │           └── route.ts       # Handler OAuth callback
+│   ├── dashboard/                 # Página principal autenticada
+│   └── auth/                      # Página de login/registro
+├── components/
+│   └── dashboard/
+│       ├── topbar.tsx             # Header com saudação e avatar
+│       ├── logout-button.tsx      # Botão de logout
+│       └── ...
+├── constants/
+│   └── rotas.ts                   # Centraliza todas as rotas da app
+├── lib/
+│   ├── supabase.ts                # Cliente Supabase (browser)
+│   └── supabaseServer.ts          # Cliente Supabase (server)
+```
+
+***
+
+## Segurança
+
+- Dados de cada usuário isolados via **Row Level Security (RLS)** no Supabase
+- Variáveis sensíveis (`SERVICE_ROLE_KEY`) nunca expostas ao cliente
+- Callback OAuth com suporte ao header `x-forwarded-host` para funcionamento correto no Vercel
+
+***
+
+## Licença
+
+MIT © 2026 CardWise

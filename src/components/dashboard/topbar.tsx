@@ -6,13 +6,6 @@ type TopbarProps = {
   user: User;
 };
 
-function getGreeting() {
-  const hour = new Date().getHours();
-  if (hour < 12) return "Bom dia";
-  if (hour < 18) return "Boa tarde";
-  return "Boa noite";
-}
-
 function getInitials(name: string) {
   return name
     .split(" ")
@@ -34,8 +27,7 @@ export function Topbar({ user }: TopbarProps) {
   return (
     <header className="sticky top-0 z-30 flex items-center justify-between border-b border-white/[0.05] bg-[#020617]/80 px-4 py-3 backdrop-blur-xl md:px-6">
       <div>
-        <p className="text-xs text-slate-500">{getGreeting()}</p>
-        <p className="text-sm font-semibold text-white">{name}</p>
+        <p className="text-sm font-semibold text-white">Bem-vindo, {name}!</p>
       </div>
 
       <div className="flex items-center gap-2">
