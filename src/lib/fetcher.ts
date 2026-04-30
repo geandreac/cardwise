@@ -1,0 +1,6 @@
+// src/lib/fetcher.ts
+export const fetcher = (url: string) =>
+  fetch(url).then((res) => {
+    if (!res.ok) throw new Error("Fetch error: " + res.status);
+    return res.json();
+  });
