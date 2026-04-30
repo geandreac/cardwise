@@ -25,7 +25,6 @@ async function fetchCartoes(): Promise<CardComGasto[]> {
   if (error) throw new Error(error.message);
   if (!cards || cards.length === 0) return [];
 
-  // Mês atual → formato YYYY-MM-01
   const now = new Date();
   const mesAtual = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
 
@@ -84,7 +83,20 @@ export function useCartoes() {
       "credit_limit" | "due_day" | "closing_day" | "theme_color"
     >
   ): Promise<void> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Usuário não autenticado");
+
+    // Busca o id real do perfil via auth_user_id
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("auth_user_id", user.id)
+      .single();
+
+    if (profileError || !profile) throw new Error("Perfil não encontrado");
+
     const { error } = await supabase.from("cards").insert({
+      profile_id:   profile.id,
       nickname:     input.nickname,
       brand:        input.brand,
       last_four:    input.last_four,
@@ -111,7 +123,6 @@ export function useCartoes() {
   }
 
   async function desativarCartao(id: string): Promise<void> {
-    // RN06 — soft delete: is_active = false se tiver transações
     const { error } = await supabase
       .from("cards")
       .update({ is_active: false })
@@ -133,12 +144,10 @@ export function useCartoes() {
     isLoading,
     isError:      !!error,
     errorMessage: error?.message ?? null,
-    // KPIs prontos para o dashboard
     limite_total,
     gasto_total,
     limite_disponivel,
     uso_percentual,
-    // mutations
     criarCartao,
     atualizarCartao,
     desativarCartao,
