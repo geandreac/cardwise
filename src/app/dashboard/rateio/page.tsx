@@ -81,7 +81,7 @@ export default function RateioPage() {
                     ))}
                   </Pie>
                   <RechartsTooltip
-                    formatter={(value: any) => formatMoeda(Number(value))}
+                    formatter={(value: number | string | Array<number | string>) => formatMoeda(Number(value))}
                     contentStyle={{ backgroundColor: "#0f172a", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "12px", color: "#fff" }}
                     itemStyle={{ color: "#fff" }}
                   />

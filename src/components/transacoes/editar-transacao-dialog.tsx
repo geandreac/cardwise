@@ -72,8 +72,8 @@ export function EditarTransacaoDialog({ transacao, onClose, onSuccess }: Props) 
       if (updateError) throw updateError;
 
       onSuccess();
-    } catch (err: any) {
-      setError(err.message || "Erro desconhecido ao atualizar.");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Erro desconhecido ao atualizar.");
     } finally {
       setIsLoading(false);
     }

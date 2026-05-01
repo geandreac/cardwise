@@ -61,7 +61,7 @@ export function useRateio(mes: string) {
       for (const tx of data) {
         totalGeral += tx.amount;
         const bId = tx.buyer_id || "EU";
-        const bName = (tx.buyers as any)?.name || "Eu";
+        const bName = (tx.buyers as { name: string } | null)?.name || "Eu";
 
         if (!mapa.has(bId)) {
           mapa.set(bId, { name: bName, amount: 0 });
