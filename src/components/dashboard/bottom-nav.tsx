@@ -4,17 +4,17 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
-  CreditCard,
   ArrowLeftRight,
   BarChart3,
   User,
+  Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const items = [
   { href: "/dashboard",            label: "Geral",      icon: LayoutDashboard },
-  { href: "/dashboard/cartoes",    label: "Cartões",    icon: CreditCard },
   { href: "/dashboard/transacoes", label: "Transações", icon: ArrowLeftRight },
+  { href: "/dashboard/rateio",     label: "Rateio",     icon: Users },
   { href: "/dashboard/analise",    label: "Análise",    icon: BarChart3 },
   { href: "/dashboard/perfil",     label: "Perfil",     icon: User },
 ];

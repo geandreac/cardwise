@@ -1,4 +1,3 @@
-// src/components/cartoes/card-drawer.tsx
 "use client";
 
 import { X } from "lucide-react";
@@ -13,13 +12,14 @@ export type FormData = {
   credit_limit: string;
   due_day: string;
   closing_day: string;
+  due_next_month: boolean;
   theme_color: string;
 };
 
 const INITIAL: FormData = {
   nickname: "", last_four: "", holder_name: "",
   brand: "visa", credit_limit: "",
-  due_day: "", closing_day: "", theme_color: "blue",
+  due_day: "", closing_day: "", due_next_month: true, theme_color: "blue",
 };
 
 type Props = {
@@ -50,6 +50,7 @@ export function CardDrawer({ open, cartao, onClose, onSave, isSaving }: Props) {
         credit_limit: String(cartao.credit_limit),
         due_day:      String(cartao.due_day ?? ""),
         closing_day:  String(cartao.closing_day ?? ""),
+        due_next_month: cartao.due_next_month ?? true,
         theme_color:  cartao.theme_color,
       });
     } else {
@@ -97,7 +98,7 @@ export function CardDrawer({ open, cartao, onClose, onSave, isSaving }: Props) {
               <label className="text-[11px] font-medium uppercase tracking-widest text-slate-400">{label}</label>
               <input
                 required
-                value={form[field as keyof FormData]}
+                value={form[field as keyof FormData] as string}
                 onChange={(e) => set(field as keyof FormData, e.target.value)}
                 placeholder={placeholder}
                 className="w-full rounded-xl border border-white/[0.08] bg-slate-800 px-3.5 py-2.5 text-sm text-white placeholder:text-slate-600 focus:border-blue-500/50 focus:outline-none transition-colors"
@@ -149,6 +150,20 @@ export function CardDrawer({ open, cartao, onClose, onSave, isSaving }: Props) {
                 className="w-full rounded-xl border border-white/[0.08] bg-slate-800 px-3.5 py-2.5 text-sm text-white placeholder:text-slate-600 focus:border-blue-500/50 focus:outline-none transition-colors"
               />
             </div>
+          </div>
+
+          <div className="flex items-center justify-between rounded-xl border border-white/[0.08] bg-slate-800 p-3.5">
+            <div className="space-y-0.5">
+              <label className="text-[12px] font-medium text-white">Vence no mês seguinte?</label>
+              <p className="text-[10px] text-slate-400">Ative se as compras próximas ao fechamento ficam para o próximo mês civil.</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setForm((f) => ({ ...f, due_next_month: !f.due_next_month }))}
+              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none ${form.due_next_month ? 'bg-blue-600' : 'bg-slate-600'}`}
+            >
+              <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${form.due_next_month ? 'translate-x-4' : 'translate-x-1'}`} />
+            </button>
           </div>
 
           <div className="space-y-1.5">

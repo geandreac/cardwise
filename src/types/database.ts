@@ -55,6 +55,38 @@ export type Database = {
           },
         ]
       }
+      buyers: {
+        Row: {
+          id: string
+          profile_id: string
+          name: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          profile_id: string
+          name: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          profile_id?: string
+          name?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "buyers_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       cards: {
         Row: {
           brand: Database["public"]["Enums"]["card_brand"]
@@ -62,6 +94,7 @@ export type Database = {
           created_at: string
           credit_limit: number
           due_day: number
+          due_next_month: boolean
           holder_name: string
           id: string
           is_active: boolean
@@ -77,6 +110,7 @@ export type Database = {
           created_at?: string
           credit_limit?: number
           due_day: number
+          due_next_month?: boolean
           holder_name: string
           id?: string
           is_active?: boolean
@@ -92,6 +126,7 @@ export type Database = {
           created_at?: string
           credit_limit?: number
           due_day?: number
+          due_next_month?: boolean
           holder_name?: string
           id?: string
           is_active?: boolean
@@ -273,8 +308,10 @@ export type Database = {
       transactions: {
         Row: {
           amount: number
+          buyer_id: string | null
           card_id: string
           category_id: string | null
+          competence_date: string
           created_at: string
           id: string
           installment_info: string | null
@@ -287,8 +324,10 @@ export type Database = {
         }
         Insert: {
           amount: number
+          buyer_id?: string | null
           card_id: string
           category_id?: string | null
+          competence_date: string
           created_at?: string
           id?: string
           installment_info?: string | null
@@ -301,8 +340,10 @@ export type Database = {
         }
         Update: {
           amount?: number
+          buyer_id?: string | null
           card_id?: string
           category_id?: string | null
+          competence_date?: string
           created_at?: string
           id?: string
           installment_info?: string | null

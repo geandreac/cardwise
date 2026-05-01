@@ -38,6 +38,7 @@ export default function CartoesPage() {
           due_day:      Number(data.due_day),
           closing_day:  Number(data.closing_day),
           theme_color:  data.theme_color as CardTheme,
+          due_next_month: data.due_next_month || false,
         });
       }
       setDrawerOpen(false);

@@ -29,6 +29,7 @@ export interface ICard {
   credit_limit: number;
   due_day: number;         // 1-31
   closing_day: number;     // 1-31
+  due_next_month: boolean;
   theme_color: CardTheme;
   is_active: boolean;
   created_at: string;
@@ -61,6 +62,8 @@ export interface ITransaction {
   merchant_name: string;
   amount: number;
   transaction_date: string;
+  competence_date: string;
+  buyer_id: string | null;
   installment_info: string | null; // ex: "1/12"
   is_recurring: boolean;
   notes: string;

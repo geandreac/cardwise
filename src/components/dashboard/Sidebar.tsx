@@ -11,6 +11,7 @@ import {
   TrendingUp,
   Download,
   User,
+  Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LogoutButton } from "@/components/dashboard/logout-button";
@@ -20,6 +21,7 @@ const items = [
   { href: "/dashboard/cartoes",    label: "Meus Cartões", icon: CreditCard },
   { href: "/dashboard/faturas",    label: "Faturas",      icon: FileText },
   { href: "/dashboard/transacoes", label: "Transações",   icon: ArrowLeftRight },
+  { href: "/dashboard/rateio",     label: "Rateio",       icon: Users },
   { href: "/dashboard/analise",    label: "Análise",      icon: BarChart3 },
   { href: "/dashboard/projecoes",  label: "Projeções",    icon: TrendingUp },
   { href: "/dashboard/relatorios", label: "Relatórios",   icon: Download },
