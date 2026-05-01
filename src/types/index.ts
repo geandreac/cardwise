@@ -17,7 +17,7 @@ export interface IProfile {
 
 // --- Cartão de crédito ---
 export type CardBrand = "visa" | "mastercard" | "elo" | "amex" | "hipercard" | "other";
-export type CardTheme = "blue" | "green" | "graphite" | "purple";
+export type CardTheme = "blue" | "green" | "graphite" | "purple" | "lightblue" | "yellow" | "black" | "orange";
 
 export interface ICard {
   id: string;

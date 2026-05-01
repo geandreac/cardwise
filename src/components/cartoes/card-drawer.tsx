@@ -31,10 +31,12 @@ type Props = {
 };
 
 const brands = ["visa","mastercard","elo","amex","hipercard","other"];
-const themes = ["blue","green","graphite","purple"];
+const themes = ["blue","green","graphite","purple","lightblue","yellow","black","orange"];
 const themeColors: Record<string, string> = {
   blue: "bg-blue-600", green: "bg-emerald-600",
-  graphite: "bg-slate-600", purple: "bg-violet-600",
+  graphite: "bg-slate-800", purple: "bg-purple-600",
+  lightblue: "bg-sky-400", yellow: "bg-yellow-400",
+  black: "bg-black", orange: "bg-orange-500"
 };
 
 export function CardDrawer({ open, cartao, onClose, onSave, isSaving }: Props) {

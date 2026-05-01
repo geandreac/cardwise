@@ -388,7 +388,7 @@ export type Database = {
     Enums: {
       alert_severity: "info" | "warning" | "danger"
       card_brand: "visa" | "mastercard" | "elo" | "amex" | "hipercard" | "other"
-      card_theme: "blue" | "green" | "graphite" | "purple"
+      card_theme: "blue" | "green" | "graphite" | "purple" | "lightblue" | "yellow" | "black" | "orange"
       invoice_status: "open" | "closed" | "paid" | "overdue"
     }
     CompositeTypes: {
@@ -519,7 +519,7 @@ export const Constants = {
     Enums: {
       alert_severity: ["info", "warning", "danger"],
       card_brand: ["visa", "mastercard", "elo", "amex", "hipercard", "other"],
-      card_theme: ["blue", "green", "graphite", "purple"],
+      card_theme: ["blue", "green", "graphite", "purple", "lightblue", "yellow", "black", "orange"],
       invoice_status: ["open", "closed", "paid", "overdue"],
     },
   },
