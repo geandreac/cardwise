@@ -1,15 +1,27 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { Search, RefreshCw, Upload } from "lucide-react";
+import { Search, RefreshCw, Upload, Trash2, Plus } from "lucide-react";
 import { useTransacoesFull } from "@/hooks/useTransacoesFull";
 import { useCartoes } from "@/hooks/useCartoes";
 import { useCategoriasLista } from "@/hooks/useCategoriasLista";
 import { Skeleton } from "@/components/compartilhado/Skeleton";
 import { UploadFaturaModal } from "@/components/faturas/upload-fatura-modal";
 import { EditarTransacaoDialog } from "@/components/transacoes/editar-transacao-dialog";
+import { NovaTransacaoDialog } from "@/components/transacoes/nova-transacao-dialog";
+import { DeleteAllModal } from "@/components/transacoes/delete-all-modal";
 import { formatMoeda } from "@/lib/utils";
 import { TransacaoFull } from "@/hooks/useTransacoesFull";
+import { GlobalMonthPicker } from "@/components/compartilhado/GlobalMonthPicker";
+import { ActionsMenu } from "@/components/transacoes/actions-menu";
+import { useDate } from "@/context/date-context";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
@@ -54,11 +66,16 @@ function useDebounce<T>(value: T, delay = 400): T {
 // ─── página ───────────────────────────────────────────────────────────────────
 
 export default function TransacoesPage() {
+  const { referenceMonth: mes, setReferenceMonth: setMes } = useDate();
   const [busca, setBusca] = useState("");
-  const [cartaoId, setCartaoId] = useState("");
-  const [categoriaId, setCategoriaId] = useState("");
-  const [mes, setMes] = useState(mesAtual());
+  
+
+
+  const [cartaoId, setCartaoId] = useState("all_cards");
+  const [categoriaId, setCategoriaId] = useState("all_categories");
   const [uploadOpen, setUploadOpen] = useState(false);
+  const [novaOpen, setNovaOpen] = useState(false);
+  const [deleteAllOpen, setDeleteAllOpen] = useState(false);
   const [transacaoEditando, setTransacaoEditando] = useState<TransacaoFull | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -67,8 +84,8 @@ export default function TransacoesPage() {
   const filtros = useMemo(
     () => ({
       busca: buscaDebounced,
-      cartao_id: cartaoId,
-      categoria_id: categoriaId, // UUID real da tabela categories
+      cartao_id: cartaoId === "all_cards" ? "" : cartaoId,
+      categoria_id: categoriaId === "all_categories" ? "" : categoriaId,
       mes,
       refreshKey,
     }),
@@ -85,8 +102,8 @@ export default function TransacoesPage() {
 
   function limparFiltros() {
     setBusca("");
-    setCartaoId("");
-    setCategoriaId("");
+    setCartaoId("all_cards");
+    setCategoriaId("all_categories");
     setMes(mesAtual());
   }
 
@@ -100,84 +117,104 @@ export default function TransacoesPage() {
     setRefreshKey((v) => v + 1);
   }
 
+  function handleNovaSuccess() {
+    setNovaOpen(false);
+    setRefreshKey((v) => v + 1);
+  }
+
+  function handleDeleteAllSuccess() {
+    setDeleteAllOpen(false);
+    setRefreshKey((v) => v + 1);
+  }
+
   const totalFiltrado = transacoes.reduce((s, t) => s + t.amount, 0);
   const filtrosAtivos = !!(busca || cartaoId || categoriaId);
 
   return (
-    <div className="space-y-4">
-      {/* Header */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-xl font-bold text-white">Transações</h1>
+    <div className="space-y-6">
+      {/* Linha 1: Título + Navegação + Ações */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-4">
+          <h1 className="text-2xl font-bold text-white tracking-tight">Transações</h1>
+          <GlobalMonthPicker />
+        </div>
 
         <div className="flex items-center gap-2">
-          {filtrosAtivos && (
-            <button
-              onClick={limparFiltros}
-              className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors"
-            >
-              <RefreshCw className="h-3 w-3" />
-              Limpar filtros
-            </button>
-          )}
+          <button
+            onClick={() => setNovaOpen(true)}
+            className="flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition-all active:scale-95 shadow-lg shadow-blue-500/20"
+          >
+            <Plus className="h-4 w-4" />
+            <span>Nova Transação</span>
+          </button>
 
           <button
             onClick={() => setUploadOpen(true)}
-            className="flex items-center justify-center gap-2 rounded-xl bg-green-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-green-700 transition-colors"
+            className="flex items-center justify-center gap-2 rounded-xl bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700 transition-all active:scale-95 shadow-lg shadow-green-500/20"
           >
             <Upload className="h-4 w-4" />
-            Enviar PDF
+            <span>Enviar PDF</span>
           </button>
+
+          <ActionsMenu onDeleteAll={() => setDeleteAllOpen(true)} />
         </div>
       </div>
-
-      {/* Filtros */}
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        {/* Busca */}
-        <div className="relative sm:col-span-2 xl:col-span-1">
+      
+      {/* Linha 2: Barra de Busca e Filtros Pills */}
+      <div className="flex flex-wrap items-center gap-3">
+        {/* Busca (40% width approx) */}
+        <div className="relative w-full max-w-[320px]">
           <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-500" />
           <input
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
-            placeholder="Buscar estabelecimento..."
-            className="w-full rounded-xl border border-white/[0.08] bg-slate-800 py-2.5 pl-9 pr-3.5 text-sm text-white placeholder:text-slate-600 focus:border-blue-500/50 focus:outline-none transition-colors"
+            placeholder="Buscar transação..."
+            className="w-full rounded-full border border-white/[0.08] bg-transparent py-2 pl-9 pr-3.5 text-sm text-white placeholder:text-slate-600 focus:border-blue-500/50 focus:bg-slate-800/50 focus:outline-none transition-all"
           />
         </div>
 
-        {/* Mês */}
-        <input
-          type="month"
-          value={mes}
-          onChange={(e) => setMes(e.target.value)}
-          className="rounded-xl border border-white/[0.08] bg-slate-800 px-3.5 py-2.5 text-sm text-white focus:border-blue-500/50 focus:outline-none transition-colors"
-        />
+        {/* Filtro Cartão */}
+        <Select value={cartaoId} onValueChange={setCartaoId}>
+          <SelectTrigger className="h-9 rounded-full border-white/[0.08] bg-transparent px-4 text-xs font-medium text-slate-400 hover:bg-slate-800/50 hover:text-white transition-colors">
+            <SelectValue placeholder="Todos os cartões" />
+          </SelectTrigger>
+          <SelectContent className="bg-slate-900 border-white/10">
+            <SelectItem value="all_cards">Todos os cartões</SelectItem>
+            {cartoes.map((c) => (
+              <SelectItem key={c.id} value={c.id}>
+                {c.nickname}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
-        {/* Cartão */}
-        <select
-          value={cartaoId}
-          onChange={(e) => setCartaoId(e.target.value)}
-          className="rounded-xl border border-white/[0.08] bg-slate-800 px-3.5 py-2.5 text-sm text-white focus:border-blue-500/50 focus:outline-none transition-colors"
-        >
-          <option value="">Todos os cartões</option>
-          {cartoes.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.nickname}
-            </option>
-          ))}
-        </select>
+        {/* Filtro Categoria */}
+        <Select value={categoriaId} onValueChange={setCategoriaId}>
+          <SelectTrigger className="h-9 rounded-full border-white/[0.08] bg-transparent px-4 text-xs font-medium text-slate-400 hover:bg-slate-800/50 hover:text-white transition-colors">
+            <SelectValue placeholder="Todas as categorias" />
+          </SelectTrigger>
+          <SelectContent className="bg-slate-900 border-white/10">
+            <SelectItem value="all_categories">Todas as categorias</SelectItem>
+            {categorias.map((c) => (
+              <SelectItem key={c.id} value={c.id}>
+                <span className="flex items-center gap-2">
+                  <span>{c.emoji}</span>
+                  <span>{c.name}</span>
+                </span>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
-        {/* Categoria — value agora é o UUID (category_id real no banco) */}
-        <select
-          value={categoriaId}
-          onChange={(e) => setCategoriaId(e.target.value)}
-          className="rounded-xl border border-white/[0.08] bg-slate-800 px-3.5 py-2.5 text-sm text-white focus:border-blue-500/50 focus:outline-none transition-colors"
-        >
-          <option value="">Todas as categorias</option>
-          {categorias.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.emoji} {c.name}
-            </option>
-          ))}
-        </select>
+        {filtrosAtivos && (
+          <button
+            onClick={limparFiltros}
+            className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-red-400 transition-colors"
+          >
+            <RefreshCw className="h-3 w-3" />
+            Limpar
+          </button>
+        )}
       </div>
 
       {/* Subtotal */}
@@ -217,20 +254,22 @@ export default function TransacoesPage() {
               ))}
             </div>
           ) : transacoes.length === 0 ? (
-            // Estado vazio
-            <div className="flex flex-col items-center gap-3 py-16 text-center">
-              <p className="text-3xl">📄</p>
-              <p className="text-sm font-medium text-white">
-                Nenhuma transação encontrada
-              </p>
-              <p className="text-xs text-slate-500">
-                Envie uma fatura PDF ou ajuste os filtros
-              </p>
+            // Estado vazio minimalista
+            <div className="flex flex-col items-center gap-4 py-24 text-center border-2 border-dashed border-white/[0.03] rounded-3xl">
+              <div className="text-4xl opacity-20 grayscale">📄</div>
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-slate-300">
+                  Nenhuma transação encontrada
+                </p>
+                <p className="text-xs text-slate-500">
+                  Envie um PDF ou ajuste os filtros para ver dados.
+                </p>
+              </div>
               <button
                 onClick={() => setUploadOpen(true)}
-                className="mt-2 rounded-xl bg-green-600 px-5 py-2 text-sm font-semibold text-white hover:bg-green-700 transition-colors"
+                className="mt-2 rounded-xl bg-green-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-green-700 transition-all active:scale-95 shadow-lg shadow-green-500/20"
               >
-                Enviar PDF
+                Enviar PDF agora
               </button>
             </div>
           ) : (
@@ -321,6 +360,18 @@ export default function TransacoesPage() {
         transacao={transacaoEditando}
         onClose={() => setTransacaoEditando(null)}
         onSuccess={handleEditSuccess}
+      />
+
+      <NovaTransacaoDialog
+        open={novaOpen}
+        onClose={() => setNovaOpen(false)}
+        onSuccess={handleNovaSuccess}
+      />
+
+      <DeleteAllModal
+        open={deleteAllOpen}
+        onClose={() => setDeleteAllOpen(false)}
+        onSuccess={handleDeleteAllSuccess}
       />
     </div>
   );

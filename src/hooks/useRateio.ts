@@ -43,25 +43,34 @@ export function useRateio(mes: string) {
       const ultimo = dias[m - 1];
       const fim = `${mes}-${String(ultimo).padStart(2, "0")}`;
 
-      const { data, error } = await supabase
+      // 1. Busca transações
+      const { data: txData, error: txError } = await supabase
         .from("transactions")
         .select(`
           amount,
-          buyer_id,
-          buyers ( name )
+          buyer_id
         `)
         .gte("competence_date", inicio)
         .lte("competence_date", fim);
 
-      if (error) throw error;
+      if (txError) throw txError;
+
+      // 2. Busca todos os compradores
+      const { data: buyersData, error: buyersError } = await supabase
+        .from("buyers")
+        .select("id, name");
+
+      if (buyersError) throw buyersError;
+
+      const buyersMap = new Map(buyersData.map(b => [b.id, b.name]));
 
       let totalGeral = 0;
       const mapa = new Map<string, { name: string; amount: number }>();
 
-      for (const tx of data) {
+      for (const tx of txData) {
         totalGeral += tx.amount;
         const bId = tx.buyer_id || "EU";
-        const bName = (tx.buyers as unknown as { name: string } | null)?.name || "Eu";
+        const bName = tx.buyer_id ? (buyersMap.get(tx.buyer_id) || "Desconhecido") : "Eu";
 
         if (!mapa.has(bId)) {
           mapa.set(bId, { name: bName, amount: 0 });

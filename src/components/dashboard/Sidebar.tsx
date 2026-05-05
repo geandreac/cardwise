@@ -1,5 +1,7 @@
 "use client";
 
+import Image from "next/image";
+
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -35,8 +37,8 @@ export function Sidebar() {
     <aside className="fixed left-0 top-0 hidden h-screen w-[220px] flex-col border-r border-white/[0.06] bg-[#020617]/90 backdrop-blur-xl md:flex">
       {/* Logo */}
       <div className="flex items-center gap-3 px-4 py-5">
-        <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-blue-500">
-          <CreditCard className="h-4 w-4 text-white" />
+        <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white/10 shadow-sm border border-white/10">
+          <Image src="/favicon.ico" alt="CardWise Logo" width={24} height={24} className="object-contain" />
         </div>
         <span className="text-sm font-bold tracking-tight text-white">
           CardWise

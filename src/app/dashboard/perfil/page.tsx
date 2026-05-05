@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { User, DollarSign, Calendar, Save, CreditCard } from "lucide-react";
+import { User, DollarSign, Calendar, Save, CreditCard, Camera, Loader2 } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 import { usePerfil } from "@/hooks/usePerfil";
 import { useCartoes } from "@/hooks/useCartoes";
 import { Skeleton } from "@/components/compartilhado/Skeleton";
@@ -31,6 +32,7 @@ export default function PerfilPage() {
   const [currency,     setCurrency]     = useState("BRL");
   const [monthlyLimit, setMonthlyLimit] = useState("");
   const [isSaving,     setIsSaving]     = useState(false);
+  const [isUploading,  setIsUploading]  = useState(false);
   const [savedMsg,     setSavedMsg]     = useState(false);
 
   useEffect(() => {
@@ -54,6 +56,46 @@ export default function PerfilPage() {
       setTimeout(() => setSavedMsg(false), 3000);
     } finally {
       setIsSaving(false);
+    }
+  }
+
+  async function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file || !perfil) return;
+
+    try {
+      setIsUploading(true);
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${perfil.id}-${Date.now()}.${fileExt}`;
+      const filePath = `avatars/${fileName}`;
+
+      // Upload no storage (requer bucket 'avatars' criado no Supabase)
+      const { error: uploadError } = await supabase.storage
+        .from("avatars")
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from("avatars")
+        .getPublicUrl(filePath);
+
+      // Atualiza tabela profiles
+      await atualizarPerfil({ avatar_url: publicUrl });
+
+      // Atualiza metadados do auth do usuário (usado pela Topbar)
+      await supabase.auth.updateUser({
+        data: { avatar_url: publicUrl }
+      });
+
+      // Força um recarregamento para a Topbar notar (ou refresh)
+      window.location.reload();
+
+    } catch (error: any) {
+      console.error("Erro ao subir avatar:", error);
+      alert("Falha ao subir a imagem. Verifique se o bucket 'avatars' existe e é público.");
+    } finally {
+      setIsUploading(false);
     }
   }
 
@@ -83,8 +125,17 @@ export default function PerfilPage() {
       {/* Card de identidade */}
       <section className="rounded-2xl border border-white/[0.06] bg-slate-900/80 p-5">
         <div className="flex items-center gap-4">
-          <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-blue-700 text-xl font-bold text-white select-none">
-            {getInitials(perfil.full_name || "U")}
+          <div className="relative group flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-blue-500 to-blue-700 text-xl font-bold text-white select-none">
+            {perfil.avatar_url ? (
+              <img src={perfil.avatar_url} alt="Avatar" className="h-full w-full object-cover" />
+            ) : (
+              getInitials(perfil.full_name || "U")
+            )}
+
+            <label className="absolute inset-0 flex cursor-pointer items-center justify-center bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
+              {isUploading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Camera className="h-5 w-5" />}
+              <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} disabled={isUploading} />
+            </label>
           </div>
           <div>
             <p className="text-base font-semibold text-white">{perfil.full_name || "Usuário"}</p>

@@ -71,7 +71,7 @@ export function useTransacoesFull(filtros: Filtros) {
     setIsError(false);
 
     try {
-      const inicio = filtros.mes ? `${filtros.mes}-01`      : undefined;
+      const inicio = filtros.mes ? `${filtros.mes}-01` : undefined;
       const fim    = filtros.mes ? ultimoDiaMes(filtros.mes) : undefined;
 
       let query = supabase
@@ -89,8 +89,17 @@ export function useTransacoesFull(filtros: Filtros) {
       if (filtros.busca)        query = query.ilike("merchant_name", `%${filtros.busca}%`);
       if (filtros.cartao_id)    query = query.eq("card_id", filtros.cartao_id);
       if (filtros.categoria_id) query = query.eq("category_id", filtros.categoria_id);
-      if (inicio)               query = query.gte("competence_date", inicio);
-      if (fim)                  query = query.lte("competence_date", fim);
+      query = query.eq("is_deleted", false);
+      
+      if (inicio && fim) {
+        query = query.gte("competence_date", inicio).lte("competence_date", fim);
+      } else {
+        // Timeline Global: Carregar histórico recente por padrão (ex: último ano)
+        const umAnoAtras = new Date();
+        umAnoAtras.setFullYear(umAnoAtras.getFullYear() - 1);
+        umAnoAtras.setDate(1);
+        query = query.gte("competence_date", umAnoAtras.toISOString().split("T")[0]);
+      }
 
       const { data, error } = await query;
       if (error) throw error;

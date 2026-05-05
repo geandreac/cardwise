@@ -1,38 +1,42 @@
 import Groq from "groq-sdk";
 import type { ParsedInvoice } from "./parse-pdf";
 
+/**
+ * Motor de extração de faturas usando Groq (llama-3.3-70b-versatile).
+ * Structured output via JSON mode com prompt anti-alucinação.
+ */
 export async function parseFaturaComGroq(text: string): Promise<ParsedInvoice | null> {
   if (!process.env.GROQ_API_KEY) {
     console.error("[Groq] GROQ_API_KEY não configurada.");
     return null;
   }
 
-  const groq = new Groq({
-    apiKey: process.env.GROQ_API_KEY,
-  });
+  const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
-  const prompt = `
-Você é um extrator de dados de faturas de cartão de crédito do Brasil.
-Sua tarefa é ler o texto extraído do PDF da fatura e extrair as transações, data de vencimento, data de fechamento, valor total e nome do banco.
+  const systemPrompt = `Você é um extrator literal de dados de faturas de cartão de crédito brasileiro.
+Sua tarefa é ler o texto bruto extraído do PDF e retornar um JSON EXATO com os dados.
 
-Texto da fatura:
-"""
-${text.substring(0, 15000)}
-"""
+REGRAS ABSOLUTAS — VIOLAÇÃO INVALIDA A RESPOSTA:
 
-Regras de Extração:
-1. "bank": Tente identificar o banco (ex: "Nubank", "Inter", "Bradescard", "Carrefour", "Itaú", etc).
-2. "due_date": Data de vencimento no formato AAAA-MM-DD.
-3. "closing_date": Data de fechamento ou corte no formato AAAA-MM-DD. Se não achar, use a due_date.
-4. "total_amount": O valor total da fatura (número decimal, use ponto como separador).
-5. "reference_month": Mês de referência no formato AAAA-MM-01. (Você pode inferir subtraindo 1 mês da due_date, mas o sistema irá sobrescrever isso depois, então apenas retorne algo no formato AAAA-MM-01).
-6. "transactions": Lista de objetos. Cada transação deve ter:
-   - "date": Data real da compra no formato AAAA-MM-DD. CUIDADO COM COMPRAS PARCELADAS E ANO NOVO: Se a fatura é do começo do ano (ex: Fev 2026) e a compra foi em "Dez", você DEVE deduzir que a compra foi no ano anterior (Dez 2025). Sempre aplique lógica temporal se o mês da compra for muito maior que o mês da fatura.
-   - "description": Nome do estabelecimento limpo (remova "Parcela X/Y", etc). Ignore pagamentos de fatura, juros, IOF e saldo anterior.
-   - "amount": Valor da transação (número decimal positivo).
-   - "installment_info": Informação de parcela no formato "X/Y" se for compra parcelada, caso contrário, null.
+1. PARCELAS: É EXPRESSAMENTE PROIBIDO deduzir, recalcular ou alterar o denominador de uma parcela.
+   Leia a string literal. Se diz "PARC 02/03", retorne parcela_atual=2 e total_parcelas=3.
+   Se diz "PARC 05/05", retorne parcela_atual=5 e total_parcelas=5.
+   NUNCA reduza o denominador. NUNCA iguale numerador e denominador arbitrariamente.
 
-Responda SOMENTE e EXATAMENTE com um objeto JSON válido (sem markdown \`\`\`json) neste formato:
+2. DATAS: Copie o dia e mês EXATAMENTE como impressos na linha da transação. NÃO altere.
+   Se a linha diz "19/12", a data é dia 19, mês 12. Se diz "20/03", é dia 20, mês 03.
+
+3. NÃO extraia linhas de "PAGAMENTO EFETUADO", "SALDO ANTERIOR", "ESTORNO", "CRÉDITO".
+
+4. NÃO trunque a lista. Extraia TODAS as linhas de débito até "Total da Fatura".
+
+5. Extraia TODAS as seções: compras nacionais, parceladas, internacionais, encargos, IOF.
+
+6. O total_amount deve ser APENAS a soma dos débitos (sem pagamentos/créditos).
+
+7. Para closing_date: se houver período (ex: "31 Mar a 30 Abr"), use a data FINAL.
+
+Retorne OBRIGATORIAMENTE um JSON com esta estrutura exata:
 {
   "bank": "Nome do Banco",
   "due_date": "YYYY-MM-DD",
@@ -42,43 +46,43 @@ Responda SOMENTE e EXATAMENTE com um objeto JSON válido (sem markdown \`\`\`jso
   "transactions": [
     {
       "date": "YYYY-MM-DD",
-      "description": "Nome Estabelecimento",
+      "description": "Nome do Estabelecimento",
       "amount": 99.90,
-      "installment_info": "1/3"
+      "installment_info": "2/3"
     }
   ]
 }
-`.trim();
+
+Para o campo "date": use o ano da fatura. Se o mês da transação > mês de fechamento, use ano anterior.
+Para "installment_info": copie a fração literal ("2/3", "5/5"). Se não parcelada, use null.`;
 
   try {
     const completion = await groq.chat.completions.create({
-      model: "llama-3.1-8b-instant",
-      temperature: 0.1,
+      model: "llama-3.3-70b-versatile",
+      temperature: 0,
       messages: [
-        {
-          role: "user",
-          content: prompt,
-        },
+        { role: "system", content: systemPrompt },
+        { role: "user", content: `Extraia os dados desta fatura:\n\n${text.substring(0, 25000)}` },
       ],
       response_format: { type: "json_object" },
     });
 
     const content = completion.choices[0]?.message?.content ?? "{}";
-    
-    // Fallback regex to extract JSON just in case
+
     const jsonMatch = content.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) return null;
+    if (!jsonMatch) {
+      throw new Error("O modelo não retornou um formato JSON válido.");
+    }
 
     const parsed = JSON.parse(jsonMatch[0]) as ParsedInvoice;
-    
-    // Basic validation
+
     if (!parsed.transactions || !Array.isArray(parsed.transactions)) {
-        return null;
+      throw new Error("O JSON extraído não possui o array 'transactions'.");
     }
 
     return parsed;
-  } catch (error) {
+  } catch (error: any) {
     console.error("[Groq] Erro ao extrair dados da fatura:", error);
-    return null;
+    throw new Error(error.message || "Erro desconhecido ao processar fatura");
   }
 }

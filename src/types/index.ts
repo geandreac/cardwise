@@ -29,6 +29,7 @@ export interface ICard {
   credit_limit: number;
   due_day: number;         // 1-31
   closing_day: number;     // 1-31
+  days_between_closing_and_due: number; // novo campo
   due_next_month: boolean;
   theme_color: CardTheme;
   is_active: boolean;
@@ -65,6 +66,11 @@ export interface ITransaction {
   competence_date: string;
   buyer_id: string | null;
   installment_info: string | null; // ex: "1/12"
+  installment_group_id: string | null;
+  is_projection: boolean;
+  original_description: string | null;
+  fingerprint: string | null;
+  is_deleted: boolean;
   is_recurring: boolean;
   notes: string;
   created_at: string;

@@ -16,8 +16,9 @@ type Status = "idle" | "loading" | "success" | "error";
 interface UploadResult {
   bank: string;
   total_amount: number;
-  transactions_count: number;
   due_date: string;
+  cycle_adjusted: boolean;
+  new_closing_day: number;
 }
 
 export function UploadFaturaModal({ open, cartoes, onClose, onSuccess }: UploadFaturaModalProps) {
@@ -133,6 +134,16 @@ export function UploadFaturaModal({ open, cartoes, onClose, onSuccess }: UploadF
                 Vencimento:{" "}
                 {new Date(result.due_date + "T12:00:00").toLocaleDateString("pt-BR")}
               </p>
+              
+              {result.cycle_adjusted && (
+                <div className="mt-4 rounded-xl bg-blue-500/10 border border-blue-500/20 p-3 text-left">
+                  <p className="text-[11px] font-medium text-blue-400 uppercase tracking-wider mb-1">Calibragem Automática</p>
+                  <p className="text-xs text-slate-300 leading-relaxed">
+                    Detectamos que sua fatura fechou dia <span className="text-white font-bold">{result.new_closing_day}</span>. 
+                    Ajustamos seu ciclo para maior precisão nos próximos meses.
+                  </p>
+                </div>
+              )}
             </div>
             <button
               onClick={handleClose}

@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Eye, EyeOff, Mail, Lock, Loader2 } from "lucide-react";
+import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { ROTAS } from "@/constants/rotas";
 import { cn } from "@/lib/utils";
@@ -118,12 +119,12 @@ export function LoginFace({ onSwitchToRegister }: LoginFaceProps) {
             />
             <span className="text-xs text-slate-500">Lembrar de mim</span>
           </label>
-          <button
-            type="button"
+          <Link
+            href="/auth/esqueci-senha"
             className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
           >
             Esqueceu a senha?
-          </button>
+          </Link>
         </div>
 
         {/* Erro */}

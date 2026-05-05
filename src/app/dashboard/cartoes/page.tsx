@@ -27,6 +27,9 @@ export default function CartoesPage() {
           nickname:     data.nickname,
           credit_limit: Number(data.credit_limit),
           theme_color:  data.theme_color as CardTheme,
+          due_day:      Number(data.due_day),
+          closing_day:  Number(data.closing_day),
+          days_between_closing_and_due: Number(data.days_between_closing_and_due),
         });
       } else {
         await criarCartao({
@@ -37,6 +40,7 @@ export default function CartoesPage() {
           credit_limit: Number(data.credit_limit),
           due_day:      Number(data.due_day),
           closing_day:  Number(data.closing_day),
+          days_between_closing_and_due: Number(data.days_between_closing_and_due),
           theme_color:  data.theme_color as CardTheme,
           due_next_month: data.due_next_month || false,
         });

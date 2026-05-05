@@ -10,6 +10,10 @@ const gradients: Record<string, string> = {
   green: "from-emerald-500 via-emerald-700 to-emerald-900",
   graphite: "from-slate-500 via-slate-600 to-slate-800",
   purple: "from-violet-600 via-violet-700 to-violet-900",
+  lightblue: "from-sky-400 via-sky-500 to-sky-700",
+  yellow: "from-yellow-400 via-yellow-500 to-yellow-700",
+  black: "from-zinc-800 via-zinc-900 to-black",
+  orange: "from-orange-500 via-orange-600 to-orange-800",
 };
 
 const brandLabel: Record<string, string> = {

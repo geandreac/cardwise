@@ -22,6 +22,10 @@ const themeGradient: Record<string, string> = {
   green: "from-emerald-600 to-emerald-800",
   graphite: "from-slate-500 to-slate-700",
   purple: "from-violet-600 to-violet-800",
+  lightblue: "from-sky-400 to-sky-600",
+  yellow: "from-yellow-400 to-yellow-600",
+  black: "from-zinc-800 to-black",
+  orange: "from-orange-500 to-orange-700",
 };
 
 const badgeLabel: Record<CorType, string> = {

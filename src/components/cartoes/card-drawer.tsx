@@ -12,6 +12,7 @@ export type FormData = {
   credit_limit: string;
   due_day: string;
   closing_day: string;
+  days_between_closing_and_due: string;
   due_next_month: boolean;
   theme_color: string;
 };
@@ -19,7 +20,7 @@ export type FormData = {
 const INITIAL: FormData = {
   nickname: "", last_four: "", holder_name: "",
   brand: "visa", credit_limit: "",
-  due_day: "", closing_day: "", due_next_month: true, theme_color: "blue",
+  due_day: "", closing_day: "", days_between_closing_and_due: "7", due_next_month: true, theme_color: "blue",
 };
 
 type Props = {
@@ -39,6 +40,14 @@ const themeColors: Record<string, string> = {
   black: "bg-black", orange: "bg-orange-500"
 };
 
+const BANK_PRESETS = [
+  { name: "Nubank", closing: 30, due: 7, brand: "mastercard", theme: "purple" },
+  { name: "Banco do Brasil", closing: 30, due: 13, brand: "visa", theme: "yellow" },
+  { name: "Inter", closing: 8, due: 15, brand: "mastercard", theme: "orange" },
+  { name: "Will Bank", closing: 12, due: 15, brand: "mastercard", theme: "yellow" },
+  { name: "Carrefour", closing: 11, due: 18, brand: "mastercard", theme: "blue" },
+];
+
 export function CardDrawer({ open, cartao, onClose, onSave, isSaving }: Props) {
   const [form, setForm] = useState<FormData>(INITIAL);
 
@@ -52,6 +61,7 @@ export function CardDrawer({ open, cartao, onClose, onSave, isSaving }: Props) {
         credit_limit: String(cartao.credit_limit),
         due_day:      String(cartao.due_day ?? ""),
         closing_day:  String(cartao.closing_day ?? ""),
+        days_between_closing_and_due: String(cartao.days_between_closing_and_due ?? "7"),
         due_next_month: cartao.due_next_month ?? true,
         theme_color:  cartao.theme_color,
       });
@@ -61,7 +71,27 @@ export function CardDrawer({ open, cartao, onClose, onSave, isSaving }: Props) {
   }, [cartao, open]);
 
   function set(field: keyof FormData, value: string) {
-    setForm((f) => ({ ...f, [field]: value }));
+    setForm((f) => {
+      const next = { ...f, [field]: value };
+      
+      // Sugestão automática: Fechamento = Vencimento - 7
+      if (field === "due_day" && value && !f.closing_day) {
+        let suggestedClosing = parseInt(value) - 7;
+        if (suggestedClosing <= 0) suggestedClosing += 30;
+        next.closing_day = String(suggestedClosing);
+      }
+
+      // Recalcular dias entre fechamento e vencimento se ambos mudarem
+      if ((field === "due_day" || field === "closing_day") && next.due_day && next.closing_day) {
+        const due = parseInt(next.due_day);
+        const closing = parseInt(next.closing_day);
+        let diff = due - closing;
+        if (diff < 0) diff += 30;
+        next.days_between_closing_and_due = String(diff);
+      }
+
+      return next;
+    });
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -91,6 +121,35 @@ export function CardDrawer({ open, cartao, onClose, onSave, isSaving }: Props) {
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-1 flex-col gap-4 overflow-y-auto p-5">
+          
+          {/* Sugestões Rápidas */}
+          {!cartao && (
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Sugestões Rápidas</label>
+              <div className="flex flex-wrap gap-2">
+                {BANK_PRESETS.map((bank) => (
+                  <button
+                    key={bank.name}
+                    type="button"
+                    onClick={() => {
+                      setForm({
+                        ...form,
+                        nickname: bank.name,
+                        closing_day: String(bank.closing),
+                        due_day: String(bank.due),
+                        brand: bank.brand,
+                        theme_color: bank.theme,
+                        days_between_closing_and_due: String(bank.due >= bank.closing ? bank.due - bank.closing : (bank.due + 30) - bank.closing)
+                      });
+                    }}
+                    className="rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 text-[10px] font-semibold text-slate-300 hover:bg-white/[0.08] hover:text-white transition-colors"
+                  >
+                    {bank.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {[
             { field: "nickname",    label: "Apelido",          placeholder: "Ex: Nubank Gold" },

@@ -9,12 +9,12 @@ import { useCartoes } from "@/hooks/useCartoes";
 import { formatMoeda } from "@/lib/utils";
 
 export function KpiSection() {
-  const { cartoes, isLoading } = useCartoes();
+  const { cartoes, isLoading, limite_disponivel } = useCartoes();
 
   // ── agregados ──────────────────────────────────────────────────────────────
   const gastoTotal     = cartoes.reduce((s, c) => s + c.current_spend, 0);
   const limiteTotal    = cartoes.reduce((s, c) => s + c.credit_limit,  0);
-  const limiteDisp     = limiteTotal - gastoTotal;
+  const limiteDisp     = limite_disponivel;
   const usagePercent   = limiteTotal > 0
     ? Math.round((gastoTotal / limiteTotal) * 100)
     : 0;

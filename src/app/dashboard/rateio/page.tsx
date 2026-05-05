@@ -6,6 +6,8 @@ import { formatMoeda } from "@/lib/utils";
 import { useRateio } from "@/hooks/useRateio";
 import { Skeleton } from "@/components/compartilhado/Skeleton";
 import { Users } from "lucide-react";
+import { GlobalMonthPicker } from "@/components/compartilhado/GlobalMonthPicker";
+import { useDate } from "@/context/date-context";
 
 function mesAtual() {
   const d = new Date();
@@ -13,29 +15,20 @@ function mesAtual() {
 }
 
 export default function RateioPage() {
-  const [mes, setMes] = useState(mesAtual());
+  const { referenceMonth: mes } = useDate();
   const { dados, totalMes, isLoading, isError } = useRateio(mes);
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
+        <div className="flex items-center gap-4">
           <h1 className="text-2xl font-bold text-white flex items-center gap-2">
             <Users className="h-6 w-6 text-blue-400" />
-            Rateio de Compras
+            Rateio
           </h1>
-          <p className="text-sm text-slate-400 mt-1">
-            Veja quanto cada pessoa deve pagar na fatura deste mês.
-          </p>
+          <GlobalMonthPicker />
         </div>
-
-        <input
-          type="month"
-          value={mes}
-          onChange={(e) => setMes(e.target.value)}
-          className="rounded-xl border border-white/[0.08] bg-slate-800 px-4 py-2.5 text-sm font-medium text-white shadow-sm focus:border-blue-500/50 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
-        />
       </div>
 
       {isError ? (
@@ -48,14 +41,13 @@ export default function RateioPage() {
           <Skeleton className="h-[400px] rounded-3xl" />
         </div>
       ) : dados.length === 0 ? (
-        <div className="rounded-3xl border border-white/[0.06] bg-slate-900/60 p-12 text-center">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-800 text-3xl">
-            🤷‍♂️
+        // Estado vazio minimalista
+        <div className="flex flex-col items-center gap-4 py-24 text-center border-2 border-dashed border-white/[0.03] rounded-3xl">
+          <p className="text-4xl opacity-20 grayscale">🤷‍♂️</p>
+          <div className="space-y-1">
+            <p className="text-sm font-medium text-slate-300">Nenhuma compra no mês</p>
+            <p className="text-xs text-slate-500">Não há transações registradas para este período.</p>
           </div>
-          <h3 className="mt-4 text-lg font-semibold text-white">Nenhuma compra no mês</h3>
-          <p className="mt-2 text-sm text-slate-400">
-            Não há transações registradas para este mês de competência.
-          </p>
         </div>
       ) : (
         <div className="grid gap-6 lg:grid-cols-2">
@@ -63,15 +55,15 @@ export default function RateioPage() {
           {/* Gráfico */}
           <div className="rounded-3xl border border-white/[0.06] bg-slate-900/80 p-6 flex flex-col">
             <h2 className="text-base font-semibold text-white mb-6">Distribuição da Fatura</h2>
-            <div className="flex-1 min-h-[300px]">
+            <div className="flex-1 min-h-[300px] relative">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={dados}
                     cx="50%"
                     cy="50%"
-                    innerRadius={80}
-                    outerRadius={120}
+                    innerRadius={85}
+                    outerRadius={115}
                     paddingAngle={4}
                     dataKey="total_amount"
                     stroke="transparent"
@@ -81,13 +73,18 @@ export default function RateioPage() {
                     ))}
                   </Pie>
                   <RechartsTooltip
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     formatter={(value: any) => formatMoeda(Number(value || 0))}
-                    contentStyle={{ backgroundColor: "#0f172a", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "12px", color: "#fff" }}
+                    contentStyle={{ backgroundColor: "#020617", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "16px", color: "#fff" }}
                     itemStyle={{ color: "#fff" }}
                   />
                 </PieChart>
               </ResponsiveContainer>
+              
+              {/* Centro do Donut */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                <p className="text-[10px] uppercase tracking-widest text-slate-500 font-semibold">Total Geral</p>
+                <p className="text-2xl font-bold text-white tabular-nums">{formatMoeda(totalMes)}</p>
+              </div>
             </div>
           </div>
 
@@ -100,21 +97,29 @@ export default function RateioPage() {
 
             <div className="space-y-4">
               {dados.map((item) => (
-                <div key={item.buyer_id || "eu"} className="flex items-center justify-between rounded-2xl bg-white/[0.02] p-4 border border-white/[0.04]">
+                <div key={item.buyer_id || "eu"} className="group flex items-center justify-between rounded-2xl bg-white/[0.02] p-4 border border-white/[0.04] transition-all hover:bg-white/[0.04] hover:border-white/[0.08]">
                   <div className="flex items-center gap-3">
                     <div 
-                      className="h-10 w-10 rounded-xl flex items-center justify-center font-bold text-white shadow-inner"
-                      style={{ backgroundColor: item.color }}
+                      className="h-10 w-10 rounded-xl flex items-center justify-center font-bold text-white shadow-xl transition-transform group-hover:scale-105"
+                      style={{ 
+                        backgroundColor: item.color,
+                        boxShadow: `0 8px 16px -4px ${item.color}40`
+                      }}
                     >
                       {item.buyer_name.charAt(0).toUpperCase()}
                     </div>
                     <div>
-                      <p className="font-semibold text-white">{item.buyer_name}</p>
-                      <p className="text-xs text-slate-400">{item.percentage.toFixed(1)}% do total</p>
+                      <p className="font-semibold text-white tracking-tight">{item.buyer_name}</p>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-white/5 text-slate-400">
+                          {item.percentage.toFixed(1)}%
+                        </span>
+                        <p className="text-[10px] text-slate-500">participação</p>
+                      </div>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-bold text-white">{formatMoeda(item.total_amount)}</p>
+                    <p className="text-base font-bold text-white tabular-nums tracking-tight">{formatMoeda(item.total_amount)}</p>
                   </div>
                 </div>
               ))}

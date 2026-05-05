@@ -1,14 +1,16 @@
 // src/app/dashboard/projecoes/page.tsx
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
-  ResponsiveContainer, LineChart, Line,
-  XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine,
+  ResponsiveContainer, BarChart, Bar,
+  XAxis, YAxis, CartesianGrid, Tooltip, Cell,
 } from "recharts";
 import { useCartoes } from "@/hooks/useCartoes";
+import { supabase } from "@/lib/supabase";
 import { formatMoeda } from "@/lib/utils";
 import { Skeleton } from "@/components/compartilhado/Skeleton";
+import { CalendarDays, TrendingDown, CreditCard, DollarSign } from "lucide-react";
 
 const TOOLTIP_STYLE = {
   backgroundColor: "#1e293b",
@@ -18,180 +20,201 @@ const TOOLTIP_STYLE = {
   fontSize: "12px",
 };
 
-function fmtTooltip(v: unknown) {
-  return typeof v === "number" ? formatMoeda(v) : String(v ?? "");
-}
+const MESES_NOMES = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
 
-const MESES = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
+type FutureInstallment = {
+  id: string;
+  merchant_name: string;
+  amount: number;
+  transaction_date: string;
+  competence_date: string;
+  installment_info: string | null;
+  card_nickname?: string;
+  card_id: string;
+};
 
 export default function ProjecoesPage() {
-  const { cartoes, isLoading, gasto_total, limite_total } = useCartoes();
+  const { cartoes, isLoading: cartoesLoading, gasto_total, limite_total } = useCartoes();
+  const [futureData, setFutureData] = useState<FutureInstallment[]>([]);
+  const [isLoadingFuture, setIsLoadingFuture] = useState(true);
 
-  const [reducao,      setReducao]      = useState(0);
-  const [aporteMensal, setAporteMensal] = useState(0);
-  const [mesesProj,    setMesesProj]    = useState(6);
+  // Fetch future transactions (competence_date > current month)
+  useEffect(() => {
+    async function fetchFuture() {
+      setIsLoadingFuture(true);
+      const now = new Date();
+      const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
 
-  const gastoAtual     = gasto_total;
-  const gastoProjetado = gastoAtual * (1 - reducao / 100);
-  const economia       = gastoAtual - gastoProjetado + aporteMensal;
+      const { data, error } = await supabase
+        .from("transactions")
+        .select("id, merchant_name, amount, transaction_date, competence_date, installment_info, card_id")
+        .gt("competence_date", currentMonth)
+        .eq("is_deleted", false)
+        .order("competence_date", { ascending: true })
+        .order("transaction_date", { ascending: true });
 
-  const dadosProjecao = useMemo(() => {
-    const hoje = new Date();
-    return Array.from({ length: mesesProj }, (_, i) => {
-      const d   = new Date(hoje.getFullYear(), hoje.getMonth() + i, 1);
-      const mes = MESES[d.getMonth()];
-      return {
-        mes,
-        gasto:        gastoProjetado,
-        atual:        gastoAtual,
-        economiaAcum: economia * (i + 1),
-      };
+      if (!error && data) {
+        setFutureData(data as FutureInstallment[]);
+      }
+      setIsLoadingFuture(false);
+    }
+    fetchFuture();
+  }, []);
+
+  // Map card_id -> nickname
+  const cardNickMap = useMemo(() => {
+    const map = new Map<string, string>();
+    cartoes.forEach(c => map.set(c.id, c.nickname));
+    return map;
+  }, [cartoes]);
+
+  // Group by competence month
+  const monthlyData = useMemo(() => {
+    const grouped = new Map<string, { total: number; items: FutureInstallment[] }>();
+
+    futureData.forEach(tx => {
+      const cm = tx.competence_date;
+      if (!grouped.has(cm)) grouped.set(cm, { total: 0, items: [] });
+      const g = grouped.get(cm)!;
+      g.total += tx.amount;
+      g.items.push({ ...tx, card_nickname: cardNickMap.get(tx.card_id) || "—" });
     });
-  }, [gastoAtual, gastoProjetado, economia, mesesProj]);
 
-  const economiaAnual    = economia * 12;
-  const mesesParaLimite  = limite_total > 0 && gastoProjetado > 0
-    ? Math.ceil(limite_total / gastoProjetado)
-    : null;
+    return Array.from(grouped.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([month, data]) => {
+        const [y, m] = month.split("-").map(Number);
+        return {
+          month,
+          label: `${MESES_NOMES[m - 1]}/${y}`,
+          total: data.total,
+          items: data.items,
+        };
+      });
+  }, [futureData, cardNickMap]);
+
+  // Chart data
+  const chartData = useMemo(() => {
+    return monthlyData.map(m => ({
+      name: m.label,
+      valor: Math.round(m.total * 100) / 100,
+    }));
+  }, [monthlyData]);
+
+  // KPIs
+  const totalFuturo = futureData.reduce((acc, tx) => acc + tx.amount, 0);
+  const mesesComParcela = monthlyData.length;
+  const maiorMes = monthlyData.reduce((max, m) => m.total > max ? m.total : max, 0);
+
+  const isLoading = cartoesLoading || isLoadingFuture;
 
   if (isLoading) {
     return (
       <div className="space-y-4">
         <Skeleton className="h-8 w-28 rounded-xl" />
-        <Skeleton className="h-48 w-full rounded-2xl" />
-        <Skeleton className="h-72 w-full rounded-2xl" />
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-[88px] rounded-2xl" />)}
+        </div>
+        <Skeleton className="h-64 w-full rounded-2xl" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-5 max-w-3xl">
+    <div className="space-y-5">
       <h1 className="text-xl font-bold text-white">Projeções</h1>
 
       {/* KPIs */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {[
-          { label: "Gasto atual/mês", value: formatMoeda(gastoAtual),    color: "text-white"      },
-          { label: "Limite total",    value: formatMoeda(limite_total),   color: "text-blue-400"   },
-          { label: "Gasto projetado", value: formatMoeda(gastoProjetado), color: "text-yellow-400" },
-          { label: "Economia/ano",    value: formatMoeda(economiaAnual),  color: "text-green-400"  },
-        ].map(({ label, value, color }) => (
-          <div key={label} className="rounded-2xl border border-white/[0.06] bg-slate-900/80 p-3 text-center">
-            <p className="text-[10px] uppercase tracking-widest text-slate-500">{label}</p>
-            <p className={`mt-1 text-sm font-bold tabular-nums ${color}`}>{value}</p>
+          { label: "Compromisso Futuro", value: formatMoeda(totalFuturo), color: "text-red-400", icon: <TrendingDown className="h-4 w-4 text-red-400" /> },
+          { label: "Meses com Parcela", value: `${mesesComParcela} meses`, color: "text-yellow-400", icon: <CalendarDays className="h-4 w-4 text-yellow-400" /> },
+          { label: "Mês Mais Pesado", value: formatMoeda(maiorMes), color: "text-orange-400", icon: <DollarSign className="h-4 w-4 text-orange-400" /> },
+          { label: "Limite Disponível Real", value: formatMoeda(limite_total - gasto_total - totalFuturo), color: limite_total - gasto_total - totalFuturo > 0 ? "text-green-400" : "text-red-400", icon: <CreditCard className="h-4 w-4 text-green-400" /> },
+        ].map(({ label, value, color, icon }) => (
+          <div key={label} className="rounded-2xl border border-white/[0.06] bg-slate-900/80 p-3.5">
+            <div className="flex items-center gap-2 mb-1">
+              {icon}
+              <p className="text-[10px] uppercase tracking-widest text-slate-500">{label}</p>
+            </div>
+            <p className={`text-sm font-bold tabular-nums ${color}`}>{value}</p>
           </div>
         ))}
       </div>
 
-      {/* Simulador */}
-      <div className="rounded-2xl border border-white/[0.06] bg-slate-900/80 p-5 space-y-5">
-        <h2 className="text-sm font-semibold text-white">Simulador &ldquo;E se...&rdquo;</h2>
-
-        <div className="space-y-2">
-          <div className="flex justify-between text-xs">
-            <span className="text-slate-400">Se eu reduzir meus gastos em</span>
-            <span className="font-semibold text-yellow-400">{reducao}%</span>
-          </div>
-          <input type="range" min={0} max={80} step={5} value={reducao}
-            onChange={(e) => setReducao(Number(e.target.value))}
-            className="w-full accent-yellow-400" />
-          <div className="flex justify-between text-[10px] text-slate-600">
-            <span>0%</span><span>80%</span>
+      {futureData.length === 0 ? (
+        <div className="flex flex-col items-center gap-4 py-20 text-center rounded-2xl border border-dashed border-white/[0.06] bg-slate-900/40">
+          <div className="text-4xl opacity-20">📊</div>
+          <div className="space-y-1">
+            <p className="text-sm font-medium text-slate-300">Nenhuma parcela futura encontrada</p>
+            <p className="text-xs text-slate-500">Envie um PDF com compras parceladas ou crie uma transação parcelada.</p>
           </div>
         </div>
-
-        <div className="space-y-2">
-          <div className="flex justify-between text-xs">
-            <span className="text-slate-400">Pagamento extra mensal</span>
-            <span className="font-semibold text-green-400">{formatMoeda(aporteMensal)}</span>
+      ) : (
+        <>
+          {/* Gráfico de Barras */}
+          <div className="rounded-2xl border border-white/[0.06] bg-slate-900/80 p-4">
+            <h2 className="mb-4 text-sm font-semibold text-white">Compromissos por Mês</h2>
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={chartData} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                <XAxis dataKey="name" tick={{ fill: "#64748b", fontSize: 11 }} axisLine={false} tickLine={false} />
+                <YAxis tickFormatter={(v) => `R$${(v/1000).toFixed(0)}k`} tick={{ fill: "#64748b", fontSize: 11 }} axisLine={false} tickLine={false} width={54} />
+                <Tooltip
+                  formatter={(v: any) => [formatMoeda(Number(v)), "Total"]}
+                  contentStyle={TOOLTIP_STYLE}
+                />
+                <Bar dataKey="valor" radius={[6, 6, 0, 0]} maxBarSize={40}>
+                  {chartData.map((_, idx) => (
+                    <Cell key={idx} fill={idx === 0 ? "#f97316" : "#3b82f6"} fillOpacity={0.85} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
           </div>
-          <input type="range" min={0} max={2000} step={50} value={aporteMensal}
-            onChange={(e) => setAporteMensal(Number(e.target.value))}
-            className="w-full accent-green-400" />
-          <div className="flex justify-between text-[10px] text-slate-600">
-            <span>R$ 0</span><span>R$ 2.000</span>
-          </div>
-        </div>
 
-        <div className="space-y-2">
-          <div className="flex justify-between text-xs">
-            <span className="text-slate-400">Horizonte de projeção</span>
-            <span className="font-semibold text-blue-400">{mesesProj} meses</span>
-          </div>
-          <input type="range" min={3} max={24} step={3} value={mesesProj}
-            onChange={(e) => setMesesProj(Number(e.target.value))}
-            className="w-full accent-blue-400" />
-          <div className="flex justify-between text-[10px] text-slate-600">
-            <span>3 meses</span><span>24 meses</span>
-          </div>
-        </div>
-
-        {economia > 0 && (
-          <div className="rounded-xl bg-green-500/10 border border-green-500/20 p-3">
-            <p className="text-xs text-green-400 font-medium">
-              💡 Com essas mudanças, você economizaria{" "}
-              <span className="font-bold">{formatMoeda(economiaAnual)}</span> em 12 meses.
-              {mesesParaLimite && mesesParaLimite > 0 && (
-                <> Seu limite total duraria aproximadamente{" "}
-                <span className="font-bold">{mesesParaLimite} meses</span> no ritmo projetado.</>
-              )}
-            </p>
-          </div>
-        )}
-      </div>
-
-      {/* Gráfico */}
-      <div className="rounded-2xl border border-white/[0.06] bg-slate-900/80 p-4">
-        <h2 className="mb-4 text-sm font-semibold text-white">Projeção de Gastos</h2>
-        <ResponsiveContainer width="100%" height={240}>
-          <LineChart data={dadosProjecao} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-            <XAxis dataKey="mes" tick={{ fill: "#64748b", fontSize: 11 }} axisLine={false} tickLine={false} />
-            <YAxis tickFormatter={(v) => `R$${(v/1000).toFixed(0)}k`} tick={{ fill: "#64748b", fontSize: 11 }} axisLine={false} tickLine={false} width={50} />
-            <Tooltip formatter={fmtTooltip} contentStyle={TOOLTIP_STYLE} />
-            <ReferenceLine
-              y={mesesProj > 0 ? limite_total / mesesProj : 0}
-              stroke="rgba(239,68,68,0.4)"
-              strokeDasharray="4 4"
-              label={{ value: "Limite", fill: "#ef4444", fontSize: 10 }}
-            />
-            <Line type="monotone" dataKey="atual"        stroke="rgba(100,116,139,0.5)" strokeWidth={1.5} strokeDasharray="4 4" dot={false} name="Gasto atual" />
-            <Line type="monotone" dataKey="gasto"        stroke="#3b82f6" strokeWidth={2} dot={{ fill: "#3b82f6", r: 3 }} name="Gasto projetado" />
-            <Line type="monotone" dataKey="economiaAcum" stroke="#10b981" strokeWidth={2} dot={false} name="Economia acumulada" />
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
-
-      {/* Por cartão */}
-      {cartoes.length > 0 && (
-        <div className="rounded-2xl border border-white/[0.06] bg-slate-900/80 p-4">
-          <h2 className="mb-3 text-sm font-semibold text-white">Impacto por Cartão</h2>
-          <div className="space-y-2">
-            {cartoes.map((c) => {
-              const projetado  = c.current_spend * (1 - reducao / 100);
-              const novoPercent = c.credit_limit > 0
-                ? Math.round((projetado / c.credit_limit) * 100)
-                : 0;
-              return (
-                <div key={c.id} className="flex items-center gap-3">
-                  <span className="w-28 truncate text-xs text-slate-400">{c.nickname}</span>
-                  <div className="flex-1">
-                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-800">
-                      <div
-                        className="h-full rounded-full bg-blue-500 transition-all duration-500"
-                        style={{ width: `${Math.min(novoPercent, 100)}%` }}
-                      />
-                    </div>
+          {/* Lista detalhada por mês */}
+          <div className="space-y-3">
+            {monthlyData.map(m => (
+              <div key={m.month} className="rounded-2xl border border-white/[0.06] bg-slate-900/80 overflow-hidden">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.05]">
+                  <div className="flex items-center gap-2">
+                    <CalendarDays className="h-3.5 w-3.5 text-blue-400" />
+                    <span className="text-sm font-semibold text-white">{m.label}</span>
+                    <span className="rounded-full bg-slate-800 px-2 py-0.5 text-[10px] text-slate-400">
+                      {m.items.length} parcela{m.items.length !== 1 ? "s" : ""}
+                    </span>
                   </div>
-                  <span className="w-24 text-right text-xs tabular-nums text-slate-400">
-                    {formatMoeda(projetado)}{" "}
-                    <span className="text-slate-600">({novoPercent}%)</span>
+                  <span className="text-sm font-bold tabular-nums text-red-400">
+                    {formatMoeda(m.total)}
                   </span>
                 </div>
-              );
-            })}
+                <ul className="divide-y divide-white/[0.04]">
+                  {m.items.map(tx => (
+                    <li key={tx.id} className="flex items-center justify-between px-4 py-2.5">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <p className="truncate text-sm text-white">{tx.merchant_name}</p>
+                          {tx.installment_info && (
+                            <span className="shrink-0 rounded-full bg-purple-500/10 px-1.5 py-0.5 text-[9px] font-semibold text-purple-400">
+                              {tx.installment_info}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-slate-500 mt-0.5">
+                          {tx.card_nickname} · {new Date(tx.transaction_date + 'T00:00:00').toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}
+                        </p>
+                      </div>
+                      <span className="shrink-0 text-sm font-semibold tabular-nums text-red-400 ml-3">
+                        {formatMoeda(tx.amount)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
           </div>
-        </div>
+        </>
       )}
     </div>
   );

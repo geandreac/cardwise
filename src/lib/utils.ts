@@ -16,6 +16,13 @@ export function formatMoeda(valor: number): string {
   }).format(valor);
 }
 
+// Extrai números de string BRL para float
+// Uso: parseCurrencyInput("R$ 1.234,56") → 1234.56
+export function parseCurrencyInput(value: string): number {
+  const numericValue = value.replace(/\D/g, "");
+  return Number(numericValue) / 100;
+}
+
 // Formata data ISO para pt-BR
 // Uso: formatData("2024-04-01") → "01/04/2024"
 export function formatData(data: string): string {

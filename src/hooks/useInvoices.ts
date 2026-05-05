@@ -17,6 +17,8 @@ export type Invoice = {
   total_amount: number;
   status: InvoiceStatus;
   paid_at: string | null;
+  card_closing_day: number;
+  card_due_day: number;
 };
 
 type InvoiceRow = {
@@ -32,6 +34,8 @@ type InvoiceRow = {
     nickname: string;
     brand: string;
     theme_color: string;
+    closing_day: number;
+    due_day: number;
   } | null;
 };
 
@@ -47,7 +51,7 @@ async function fetchInvoices(): Promise<Invoice[]> {
       total_amount,
       status,
       paid_at,
-      cards ( nickname, brand, theme_color )
+      cards ( nickname, brand, theme_color, closing_day, due_day )
     `)
     .order("reference_month", { ascending: false });
 
@@ -65,6 +69,8 @@ async function fetchInvoices(): Promise<Invoice[]> {
     total_amount:    i.total_amount,
     status:          i.status as InvoiceStatus,
     paid_at:         i.paid_at,
+    card_closing_day: i.cards?.closing_day ?? 0,
+    card_due_day:     i.cards?.due_day     ?? 0,
   }));
 }
 

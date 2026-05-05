@@ -34,6 +34,7 @@ export function usePerfil() {
     full_name?: string;
     currency?: string;
     monthly_limit?: number | null;
+    avatar_url?: string | null;
   }) {
     const { error } = await supabase
       .from("profiles")
