@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { ChevronLeft, ChevronRight, CheckCircle2, Clock, AlertTriangle, XCircle, Trash2 } from "lucide-react";
+import { CheckCircle2, Clock, AlertTriangle, XCircle } from "lucide-react";
 import { useInvoices, type Invoice, type InvoiceStatus } from "@/hooks/useInvoices";
 import { useCartoes } from "@/hooks/useCartoes";
 import { Skeleton } from "@/components/compartilhado/Skeleton";

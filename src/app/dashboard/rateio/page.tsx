@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip } from "recharts";
 import { formatMoeda } from "@/lib/utils";
 import { useRateio } from "@/hooks/useRateio";
@@ -8,11 +7,6 @@ import { Skeleton } from "@/components/compartilhado/Skeleton";
 import { Users } from "lucide-react";
 import { GlobalMonthPicker } from "@/components/compartilhado/GlobalMonthPicker";
 import { useDate } from "@/context/date-context";
-
-function mesAtual() {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-}
 
 export default function RateioPage() {
   const { referenceMonth: mes } = useDate();

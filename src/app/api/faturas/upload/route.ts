@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabaseServer";
 import { parseFaturaComGroq } from "@/lib/groq-parse";
 import { categorizarTransacoes } from "@/lib/groq-categorize";
-import { findInvoiceByDate, generateInstallmentSeries, calculateFingerprint, calculateCompetenceDate } from "@/lib/invoice-utils";
+import { generateInstallmentSeries, calculateFingerprint, calculateCompetenceDate } from "@/lib/invoice-utils";
 
 export async function POST(req: NextRequest) {
   try {

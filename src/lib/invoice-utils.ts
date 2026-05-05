@@ -1,5 +1,4 @@
 import { supabase } from "./supabase";
-import { ICard } from "@/types";
 
 /**
  * Calcula o mês de referência (Mês de Vencimento) para uma transação.

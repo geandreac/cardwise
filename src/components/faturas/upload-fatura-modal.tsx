@@ -19,6 +19,7 @@ interface UploadResult {
   due_date: string;
   cycle_adjusted: boolean;
   new_closing_day: number;
+  transactions_count: number;
 }
 
 export function UploadFaturaModal({ open, cartoes, onClose, onSuccess }: UploadFaturaModalProps) {

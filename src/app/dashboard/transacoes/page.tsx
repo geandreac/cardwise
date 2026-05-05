@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { Search, RefreshCw, Upload, Trash2, Plus } from "lucide-react";
+import { Search, RefreshCw, Upload, Plus } from "lucide-react";
 import { useTransacoesFull } from "@/hooks/useTransacoesFull";
 import { useCartoes } from "@/hooks/useCartoes";
 import { useCategoriasLista } from "@/hooks/useCategoriasLista";
