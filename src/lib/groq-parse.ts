@@ -81,8 +81,8 @@ Para "installment_info": copie a fração literal ("2/3", "5/5"). Se não parcel
     }
 
     return parsed;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[Groq] Erro ao extrair dados da fatura:", error);
-    throw new Error(error.message || "Erro desconhecido ao processar fatura");
+    throw new Error(error instanceof Error ? error.message : "Erro desconhecido ao processar fatura");
   }
 }

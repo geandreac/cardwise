@@ -149,7 +149,7 @@ export default function PerfilPage() {
         </div>
 
         {/* Estatísticas rápidas */}
-        <div className="mt-4 grid grid-cols-3 gap-3">
+        <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
           {[
             { icon: CreditCard, label: "Cartões",       value: String(cartoes.length)    },
             { icon: DollarSign, label: "Limite total",  value: formatMoeda(limite_total) },

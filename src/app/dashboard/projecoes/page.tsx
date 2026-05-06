@@ -112,7 +112,7 @@ export default function ProjecoesPage() {
     return (
       <div className="space-y-4">
         <Skeleton className="h-8 w-28 rounded-xl" />
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-[88px] rounded-2xl" />)}
         </div>
         <Skeleton className="h-64 w-full rounded-2xl" />
@@ -125,7 +125,7 @@ export default function ProjecoesPage() {
       <h1 className="text-xl font-bold text-white">Projeções</h1>
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         {[
           { label: "Compromisso Futuro", value: formatMoeda(totalFuturo), color: "text-red-400", icon: <TrendingDown className="h-4 w-4 text-red-400" /> },
           { label: "Meses com Parcela", value: `${mesesComParcela} meses`, color: "text-yellow-400", icon: <CalendarDays className="h-4 w-4 text-yellow-400" /> },

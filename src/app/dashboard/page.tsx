@@ -19,7 +19,7 @@ export default function DashboardPage() {
       {/* ── Cartões + Categorias ─────────────────────────── */}
       <section
         aria-label="Cartões e categorias"
-        className="grid grid-cols-1 gap-4 xl:grid-cols-2"
+        className="grid grid-cols-1 gap-4 lg:grid-cols-2"
       >
         <CardsOverview />
         <CategoriesOverview />
@@ -28,7 +28,7 @@ export default function DashboardPage() {
       {/* ── Transações + Alertas ─────────────────────────── */}
       <section
         aria-label="Transações e alertas"
-        className="grid grid-cols-1 gap-4 xl:grid-cols-2"
+        className="grid grid-cols-1 gap-4 lg:grid-cols-2"
       >
         <RecentTransactions />
         <AlertsPanel />

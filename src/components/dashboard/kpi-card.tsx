@@ -43,7 +43,7 @@ export function KpiCard({
         </div>
       </div>
 
-      <p className="text-2xl font-bold tabular-nums text-white">{value}</p>
+      <p className="text-lg sm:text-2xl font-bold tabular-nums text-white">{value}</p>
 
       <p className={cn("mt-1 text-[11px]", hintColors[hintVariant])}>
         {hint}

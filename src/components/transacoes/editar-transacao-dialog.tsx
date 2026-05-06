@@ -118,7 +118,7 @@ export function EditarTransacaoDialog({ transacao, onClose, onSuccess }: Props) 
 
   return (
     <Dialog open={!!transacao} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
           <DialogTitle className="text-[#FFFFFF]">Editar Transação</DialogTitle>
         </DialogHeader>
@@ -242,10 +242,10 @@ export function EditarTransacaoDialog({ transacao, onClose, onSuccess }: Props) 
             />
           </div>
 
-          <div className="pt-4 flex items-center justify-between gap-3">
+          <div className="pt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             
             {/* Bloco de Deleção */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 order-2 sm:order-1">
               {isConfirmingDelete ? (
                 <>
                   <button
@@ -278,11 +278,11 @@ export function EditarTransacaoDialog({ transacao, onClose, onSuccess }: Props) 
             </div>
 
             {/* Ações Normais */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3 order-1 sm:order-2">
               <button
                 type="button"
                 onClick={onClose}
-                className="rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-50 hover:bg-white/5 transition-colors"
+                className="flex-1 sm:flex-none rounded-xl px-4 py-3 sm:py-2.5 text-sm font-semibold text-slate-50 hover:bg-white/5 transition-colors"
                 disabled={isLoading}
               >
                 Cancelar
@@ -290,7 +290,7 @@ export function EditarTransacaoDialog({ transacao, onClose, onSuccess }: Props) 
               <button
                 type="submit"
                 disabled={isLoading}
-                className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 transition-colors disabled:opacity-50"
+                className="flex-1 sm:flex-none rounded-xl bg-blue-600 px-5 py-3 sm:py-2.5 text-sm font-semibold text-white hover:bg-blue-700 transition-colors disabled:opacity-50"
               >
                 {isLoading ? "Salvando..." : "Salvar Alterações"}
               </button>

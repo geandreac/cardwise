@@ -95,7 +95,7 @@ export function Topbar({ user }: TopbarProps) {
                 onClick={() => setShowNotifications(false)} 
               />
               {/* Modal/Dropdown */}
-              <div className="absolute right-0 top-full mt-2 w-72 rounded-2xl border border-white/[0.06] bg-slate-900 p-4 shadow-2xl z-50 overflow-hidden">
+              <div className="absolute right-0 top-full mt-2 w-[calc(100vw-2rem)] sm:w-72 max-h-[70vh] rounded-2xl border border-white/[0.06] bg-slate-900 p-4 shadow-2xl z-50 overflow-hidden sm:right-0 -right-2">
                 <div className="flex items-center justify-between mb-3 border-b border-white/[0.06] pb-2">
                   <h3 className="text-sm font-semibold text-white">
                     Notificações

@@ -94,12 +94,12 @@ export function UploadFaturaModal({ open, cartoes, onClose, onSuccess }: UploadF
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4">
       {/* Overlay */}
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={handleClose} />
 
       {/* Modal */}
-      <div className="relative w-full max-w-md rounded-2xl border border-white/[0.08] bg-[#0f172a] p-6 shadow-2xl">
+      <div className="relative w-full h-full sm:h-auto sm:max-w-md rounded-t-2xl sm:rounded-2xl border border-white/[0.08] bg-[#0f172a] p-5 sm:p-6 shadow-2xl overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -161,7 +161,7 @@ export function UploadFaturaModal({ open, cartoes, onClose, onSuccess }: UploadF
               <select
                 value={selectedCard}
                 onChange={(e) => setSelectedCard(e.target.value)}
-                className="w-full bg-[#111827] border border-slate-800 rounded-xl py-3 px-4 text-sm text-white outline-none focus:border-blue-500/50 transition-colors"
+                className="w-full bg-[#111827] border border-slate-800 rounded-xl py-3 px-4 text-sm text-white outline-none focus:border-blue-500/50 transition-colors min-h-[44px]"
               >
                 <option value="">Selecione um cartão</option>
                 {cartoes.map((c) => (

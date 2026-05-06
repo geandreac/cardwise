@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -49,6 +50,7 @@ export function RegisterFace({ onSwitchToLogin }: RegisterFaceProps) {
   const [error, setError] = useState<string | null>(null);
   const [passwordValue, setPasswordValue] = useState("");
 
+  const router = useRouter();
   const { register, handleSubmit, formState: { errors } } = useForm<RegisterForm>({
     resolver: zodResolver(registerSchema),
   });
@@ -64,29 +66,40 @@ export function RegisterFace({ onSwitchToLogin }: RegisterFaceProps) {
       options: { data: { full_name: data.full_name } },
     });
     if (error) {
-      setError(error.message === "User already registered"
-        ? "Este email já está cadastrado."
-        : "Erro ao criar conta. Tente novamente.");
+      // Mensagens amigáveis para erros conhecidos
+      if (error.message === "User already registered") {
+        setError("Este email já está cadastrado.");
+      } else if (error.message.toLowerCase().includes("email") && error.message.toLowerCase().includes("rate")) {
+        setError("Muitas tentativas. Aguarde alguns minutos e tente novamente.");
+      } else if (error.message.toLowerCase().includes("signup") && error.message.toLowerCase().includes("disabled")) {
+        setError("Cadastro temporariamente desabilitado. Contate o suporte.");
+      } else {
+        // Exibe o erro real do Supabase para diagnóstico
+        setError(`Erro: ${error.message}`);
+      }
       setIsLoading(false);
       return;
     }
     setIsSuccess(true);
     setIsLoading(false);
+    
+    // Redireciona após 1.5s para dar feedback visual
+    setTimeout(() => {
+      router.push("/dashboard");
+    }, 1500);
   }
 
   if (isSuccess) {
     return (
-      <div className="flex flex-col items-center text-center py-6">
-        <div className="animate-checkmark mb-4">
-          <CheckCircle2 size={48} className="text-green-500" />
+      <div className="flex flex-col items-center text-center py-12">
+        <div className="animate-bounce mb-6">
+          <CheckCircle2 size={64} className="text-green-500" />
         </div>
-        <h2 className="text-2xl font-bold text-white mb-2">Conta criada!</h2>
-        <p className="text-slate-400 text-sm leading-relaxed mb-6 max-w-xs">
-          Enviamos um link de confirmação para o seu email. Verifique sua caixa de entrada.
+        <h2 className="text-2xl font-bold text-white mb-2">Conta preparada!</h2>
+        <p className="text-slate-400 text-sm leading-relaxed mb-6">
+          Tudo pronto. Redirecionando você para o painel...
         </p>
-        <button onClick={onSwitchToLogin} className="text-blue-400 hover:text-blue-300 font-medium text-sm transition-colors">
-          Voltar para o login
-        </button>
+        <Loader2 className="animate-spin text-blue-500" size={24} />
       </div>
     );
   }

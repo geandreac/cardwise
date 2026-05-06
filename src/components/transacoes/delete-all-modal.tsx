@@ -43,9 +43,9 @@ export function DeleteAllModal({ open, onClose, onSuccess }: DeleteAllModalProps
       if (invError) throw invError;
 
       onSuccess();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      setError(err.message || "Erro ao apagar transações. Tente novamente.");
+      setError(err instanceof Error ? err.message : "Erro ao apagar transações. Tente novamente.");
     } finally {
       setIsLoading(false);
     }

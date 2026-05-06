@@ -38,9 +38,9 @@ export function DeleteAllInvoicesModal({ open, onClose, onSuccess }: DeleteAllIn
       if (delError) throw delError;
 
       onSuccess();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      setError(err.message || "Erro ao apagar faturas. Tente novamente.");
+      setError(err instanceof Error ? err.message : "Erro ao apagar faturas. Tente novamente.");
     } finally {
       setIsLoading(false);
     }

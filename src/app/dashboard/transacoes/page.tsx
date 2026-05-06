@@ -133,78 +133,91 @@ export default function TransacoesPage() {
   return (
     <div className="space-y-6">
       {/* Linha 1: Título + Navegação + Ações */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-4">
-          <h1 className="text-2xl font-bold text-white tracking-tight">Transações</h1>
-          <GlobalMonthPicker />
+      <div className="flex flex-col gap-3 sm:gap-4">
+        {/* Linha 1: Título + Navegação */}
+        <div className="flex items-center justify-between">
+          <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">Transações</h1>
+          <div className="sm:hidden">
+            <ActionsMenu onDeleteAll={() => setDeleteAllOpen(true)} />
+          </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setNovaOpen(true)}
-            className="flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition-all active:scale-95 shadow-lg shadow-blue-500/20"
-          >
-            <Plus className="h-4 w-4" />
-            <span>Nova Transação</span>
-          </button>
+        {/* Linha 2: Month Picker + Ações */}
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <GlobalMonthPicker />
 
-          <button
-            onClick={() => setUploadOpen(true)}
-            className="flex items-center justify-center gap-2 rounded-xl bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700 transition-all active:scale-95 shadow-lg shadow-green-500/20"
-          >
-            <Upload className="h-4 w-4" />
-            <span>Enviar PDF</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setNovaOpen(true)}
+              className="flex flex-1 sm:flex-none items-center justify-center gap-2 rounded-xl bg-blue-600 px-3 sm:px-4 py-2.5 sm:py-2 text-sm font-semibold text-white hover:bg-blue-700 transition-all active:scale-95 shadow-lg shadow-blue-500/20"
+            >
+              <Plus className="h-4 w-4" />
+              <span className="hidden sm:inline">Nova Transação</span>
+              <span className="sm:hidden">Nova</span>
+            </button>
 
-          <ActionsMenu onDeleteAll={() => setDeleteAllOpen(true)} />
+            <button
+              onClick={() => setUploadOpen(true)}
+              className="flex flex-1 sm:flex-none items-center justify-center gap-2 rounded-xl bg-green-600 px-3 sm:px-4 py-2.5 sm:py-2 text-sm font-semibold text-white hover:bg-green-700 transition-all active:scale-95 shadow-lg shadow-green-500/20"
+            >
+              <Upload className="h-4 w-4" />
+              <span className="hidden sm:inline">Enviar PDF</span>
+              <span className="sm:hidden">PDF</span>
+            </button>
+
+            <div className="hidden sm:block">
+              <ActionsMenu onDeleteAll={() => setDeleteAllOpen(true)} />
+            </div>
+          </div>
         </div>
       </div>
       
       {/* Linha 2: Barra de Busca e Filtros Pills */}
-      <div className="flex flex-wrap items-center gap-3">
-        {/* Busca (40% width approx) */}
-        <div className="relative w-full max-w-[320px]">
+      <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-2 sm:gap-3">
+        {/* Busca — full width no mobile */}
+        <div className="relative w-full sm:max-w-[320px]">
           <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-500" />
           <input
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
             placeholder="Buscar transação..."
-            className="w-full rounded-full border border-white/[0.08] bg-transparent py-2 pl-9 pr-3.5 text-sm text-white placeholder:text-slate-600 focus:border-blue-500/50 focus:bg-slate-800/50 focus:outline-none transition-all"
+            className="w-full rounded-full border border-white/[0.08] bg-transparent py-2.5 sm:py-2 pl-9 pr-3.5 text-sm text-white placeholder:text-slate-600 focus:border-blue-500/50 focus:bg-slate-800/50 focus:outline-none transition-all"
           />
         </div>
 
-        {/* Filtro Cartão */}
-        <Select value={cartaoId} onValueChange={setCartaoId}>
-          <SelectTrigger className="h-9 rounded-full border-white/[0.08] bg-transparent px-4 text-xs font-medium text-slate-400 hover:bg-slate-800/50 hover:text-white transition-colors">
-            <SelectValue placeholder="Todos os cartões" />
-          </SelectTrigger>
-          <SelectContent className="bg-slate-900 border-white/10">
-            <SelectItem value="all_cards">Todos os cartões</SelectItem>
-            {cartoes.map((c) => (
-              <SelectItem key={c.id} value={c.id}>
-                {c.nickname}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {/* Filtros — lado a lado no mobile */}
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <Select value={cartaoId} onValueChange={setCartaoId}>
+            <SelectTrigger className="h-10 sm:h-9 flex-1 sm:flex-none rounded-full border-white/[0.08] bg-transparent px-3 sm:px-4 text-xs font-medium text-slate-400 hover:bg-slate-800/50 hover:text-white transition-colors">
+              <SelectValue placeholder="Todos os cartões" />
+            </SelectTrigger>
+            <SelectContent className="bg-slate-900 border-white/10">
+              <SelectItem value="all_cards">Todos os cartões</SelectItem>
+              {cartoes.map((c) => (
+                <SelectItem key={c.id} value={c.id}>
+                  {c.nickname}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
-        {/* Filtro Categoria */}
-        <Select value={categoriaId} onValueChange={setCategoriaId}>
-          <SelectTrigger className="h-9 rounded-full border-white/[0.08] bg-transparent px-4 text-xs font-medium text-slate-400 hover:bg-slate-800/50 hover:text-white transition-colors">
-            <SelectValue placeholder="Todas as categorias" />
-          </SelectTrigger>
-          <SelectContent className="bg-slate-900 border-white/10">
-            <SelectItem value="all_categories">Todas as categorias</SelectItem>
-            {categorias.map((c) => (
-              <SelectItem key={c.id} value={c.id}>
-                <span className="flex items-center gap-2">
-                  <span>{c.emoji}</span>
-                  <span>{c.name}</span>
-                </span>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          <Select value={categoriaId} onValueChange={setCategoriaId}>
+            <SelectTrigger className="h-10 sm:h-9 flex-1 sm:flex-none rounded-full border-white/[0.08] bg-transparent px-3 sm:px-4 text-xs font-medium text-slate-400 hover:bg-slate-800/50 hover:text-white transition-colors">
+              <SelectValue placeholder="Todas as categorias" />
+            </SelectTrigger>
+            <SelectContent className="bg-slate-900 border-white/10">
+              <SelectItem value="all_categories">Todas as categorias</SelectItem>
+              {categorias.map((c) => (
+                <SelectItem key={c.id} value={c.id}>
+                  <span className="flex items-center gap-2">
+                    <span>{c.emoji}</span>
+                    <span>{c.name}</span>
+                  </span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
         {filtrosAtivos && (
           <button
@@ -288,8 +301,8 @@ export default function TransacoesPage() {
 
                     {/* Info */}
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <p className="truncate text-sm font-medium text-white">
+                      <div className="flex flex-wrap items-center gap-1 sm:gap-2">
+                        <p className="truncate text-sm font-medium text-white max-w-[180px] sm:max-w-none">
                           {tx.merchant_name}
                         </p>
                         {tx.is_recurring && (
@@ -309,16 +322,16 @@ export default function TransacoesPage() {
                         )}
                       </div>
 
-                      <div className="flex items-center gap-2 mt-0.5">
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-0 mt-0.5">
                         <p className="text-[11px] text-slate-500">
                           {formatData(tx.transaction_date)}
                         </p>
-                        <span className="text-slate-700">·</span>
+                        <span className="text-slate-700 hidden sm:inline">·</span>
                         <p className="text-[11px] text-slate-500">
                           {tx.card_nickname}
                         </p>
-                        <span className="text-slate-700">·</span>
-                        <p className="text-[11px] text-slate-500">
+                        <span className="text-slate-700 hidden sm:inline">·</span>
+                        <p className="text-[11px] text-slate-500 hidden sm:block">
                           {tx.category_name}
                         </p>
                       </div>

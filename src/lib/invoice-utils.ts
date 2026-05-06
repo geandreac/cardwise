@@ -37,12 +37,12 @@ export async function findInvoiceByDate(cardId: string, transactionDate: string)
   // Usar UTC para evitar problemas de fuso horário em datas puras (AAAA-MM-DD)
   const tDate = new Date(transactionDate + "T12:00:00Z"); 
   const tDay = tDate.getUTCDate();
-  let tMonth = tDate.getUTCMonth();
-  let tYear = tDate.getUTCFullYear();
+  const tMonth = tDate.getUTCMonth();
+  const tYear = tDate.getUTCFullYear();
 
   // Mês da Fatura (quando ela fecha)
   let invoiceMonth = tMonth;
-  let invoiceYear = tYear;
+  const invoiceYear = tYear;
 
   if (tDay > card.closing_day) {
     invoiceMonth += 1;

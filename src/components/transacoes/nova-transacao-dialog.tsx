@@ -222,7 +222,7 @@ export function NovaTransacaoDialog({ open, onClose, onSuccess }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-      <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto scrollbar-none">
+      <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
           <DialogTitle>Nova Transação Manual</DialogTitle>
         </DialogHeader>
@@ -252,7 +252,7 @@ export function NovaTransacaoDialog({ open, onClose, onSuccess }: Props) {
             </select>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {/* Valor */}
             <div className="space-y-1.5">
               <label className="text-sm font-medium text-slate-50">Valor Total</label>
@@ -262,7 +262,7 @@ export function NovaTransacaoDialog({ open, onClose, onSuccess }: Props) {
                   type="text"
                   value={amount === "" ? "" : formatMoeda(amount as number).replace("R$", "").trim()}
                   onChange={(e) => setAmount(parseCurrencyInput(e.target.value))}
-                  className="w-full rounded-xl border border-white/[0.08] bg-slate-900 pl-10 pr-3.5 py-2.5 text-sm text-white font-semibold tabular-nums focus:border-blue-500/50 focus:outline-none transition-colors"
+                  className="w-full rounded-xl border border-white/[0.08] bg-slate-900 pl-10 pr-3.5 py-3 sm:py-2.5 text-sm text-white font-semibold tabular-nums focus:border-blue-500/50 focus:outline-none transition-colors"
                   placeholder="0,00"
                   required
                 />
@@ -276,7 +276,7 @@ export function NovaTransacaoDialog({ open, onClose, onSuccess }: Props) {
                 type="date"
                 value={transactionDate}
                 onChange={(e) => setTransactionDate(e.target.value)}
-                className="w-full rounded-xl border border-white/[0.08] bg-slate-900 px-3.5 py-2.5 text-sm text-white focus:border-blue-500/50 focus:outline-none transition-colors"
+                className="w-full rounded-xl border border-white/[0.08] bg-slate-900 px-3.5 py-3 sm:py-2.5 text-sm text-white focus:border-blue-500/50 focus:outline-none transition-colors"
                 required
               />
             </div>
@@ -394,11 +394,11 @@ export function NovaTransacaoDialog({ open, onClose, onSuccess }: Props) {
             />
           </div>
 
-          <div className="pt-4 flex items-center justify-end gap-3">
+          <div className="pt-4 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 sm:gap-3">
             <button
               type="button"
               onClick={onClose}
-              className="rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-50 hover:bg-white/5 transition-colors"
+              className="rounded-xl px-4 py-3 sm:py-2.5 text-sm font-semibold text-slate-50 hover:bg-white/5 transition-colors"
               disabled={isLoading}
             >
               Cancelar
@@ -406,7 +406,7 @@ export function NovaTransacaoDialog({ open, onClose, onSuccess }: Props) {
             <button
               type="submit"
               disabled={isLoading}
-              className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 transition-colors disabled:opacity-50"
+              className="rounded-xl bg-blue-600 px-5 py-3 sm:py-2.5 text-sm font-semibold text-white hover:bg-blue-700 transition-colors disabled:opacity-50"
             >
               {isLoading ? "Salvando..." : totalParcelas > 1 ? `Adicionar ${totalParcelas}x Parcelas` : "Adicionar Transação"}
             </button>

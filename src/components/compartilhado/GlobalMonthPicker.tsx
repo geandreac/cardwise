@@ -12,6 +12,10 @@ export function GlobalMonthPicker() {
   const [year, month] = referenceMonth ? referenceMonth.split("-").map(Number) : [null, null];
   
   const dateLabel = (year && month) 
+    ? new Date(year, month - 1, 1).toLocaleDateString("pt-BR", { month: "short", year: "numeric" })
+    : "Timeline";
+
+  const dateLabelFull = (year && month) 
     ? new Date(year, month - 1, 1).toLocaleDateString("pt-BR", { month: "long", year: "numeric" })
     : "Timeline Global";
 
@@ -28,10 +32,10 @@ export function GlobalMonthPicker() {
   }
 
   return (
-    <div className="flex items-center gap-1.5 rounded-xl border border-white/[0.08] bg-slate-800/40 p-1 backdrop-blur-sm">
+    <div className="flex items-center gap-0.5 sm:gap-1.5 rounded-xl border border-white/[0.08] bg-slate-800/40 p-0.5 sm:p-1 backdrop-blur-sm">
       <button
         onClick={() => navigate(-1)}
-        className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-white/[0.05] hover:text-white transition-all active:scale-95"
+        className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-white/[0.05] hover:text-white transition-all active:scale-95"
         aria-label="Mês anterior"
       >
         <ChevronLeft className="h-4 w-4" />
@@ -39,19 +43,24 @@ export function GlobalMonthPicker() {
 
       <button
         onClick={() => setShowPicker(true)}
-        className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-white/5 transition-colors group"
+        className="flex items-center gap-1 sm:gap-2 px-1.5 sm:px-2.5 py-1.5 rounded-lg hover:bg-white/5 transition-colors group"
       >
-        <span className="min-w-[110px] text-center text-sm font-medium capitalize text-slate-200 group-hover:text-blue-400 transition-colors">
+        {/* Mobile: abreviado — Desktop: completo */}
+        <span className="text-center text-xs sm:text-sm font-medium capitalize text-slate-200 group-hover:text-blue-400 transition-colors sm:hidden">
           {dateLabel}
         </span>
-        <Calendar className="h-3.5 w-3.5 text-slate-500 group-hover:text-blue-400 transition-colors" />
+        <span className="hidden sm:inline min-w-[110px] text-center text-sm font-medium capitalize text-slate-200 group-hover:text-blue-400 transition-colors">
+          {dateLabelFull}
+        </span>
+        <Calendar className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-slate-500 group-hover:text-blue-400 transition-colors" />
       </button>
 
+      {/* Botão ALL — escondido no mobile */}
       {referenceMonth && (
         <button
           onClick={() => setReferenceMonth("")}
           title="Ver Timeline Global"
-          className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-white/[0.05] hover:text-blue-400 transition-all"
+          className="hidden sm:flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-white/[0.05] hover:text-blue-400 transition-all"
         >
           <span className="text-[10px] font-bold">ALL</span>
         </button>
@@ -59,7 +68,7 @@ export function GlobalMonthPicker() {
 
       <button
         onClick={() => navigate(1)}
-        className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-white/[0.05] hover:text-white transition-all active:scale-95"
+        className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-white/[0.05] hover:text-white transition-all active:scale-95"
         aria-label="Próximo mês"
       >
         <ChevronRight className="h-4 w-4" />

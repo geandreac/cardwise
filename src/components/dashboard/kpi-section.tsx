@@ -38,7 +38,7 @@ export function KpiSection() {
   if (isLoading) {
     return (
       <>
-        <section className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+        <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
           {[1, 2, 3, 4].map((i) => (
             <Skeleton key={i} className="h-[100px] w-full rounded-2xl" />
           ))}
@@ -53,7 +53,7 @@ export function KpiSection() {
     <>
       <section
         aria-label="Resumo financeiro"
-        className="grid grid-cols-2 gap-3 xl:grid-cols-4"
+        className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3"
       >
         <KpiCard
           title="Gasto do Mês"

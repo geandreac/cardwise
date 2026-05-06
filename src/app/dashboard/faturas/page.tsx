@@ -158,7 +158,7 @@ export default function FaturasPage() {
       {/* Header Condensado */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
-          <h1 className="text-2xl font-bold text-white tracking-tight">Faturas</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">Faturas</h1>
           <GlobalMonthPicker />
         </div>
 
@@ -169,7 +169,7 @@ export default function FaturasPage() {
       <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
         <button
           onClick={() => setCartaoFiltro("todos")}
-          className={`shrink-0 rounded-full px-4 py-1.5 text-xs font-medium transition-all ${
+          className={`shrink-0 rounded-full px-4 py-2 sm:py-1.5 text-xs font-medium transition-all ${
             cartaoFiltro === "todos" 
               ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20" 
               : "border border-white/[0.08] text-slate-400 hover:bg-slate-800/50 hover:text-white"
@@ -181,7 +181,7 @@ export default function FaturasPage() {
           <button
             key={c.id}
             onClick={() => setCartaoFiltro(c.id)}
-            className={`shrink-0 rounded-full px-4 py-1.5 text-xs font-medium transition-all ${
+            className={`shrink-0 rounded-full px-4 py-2 sm:py-1.5 text-xs font-medium transition-all ${
               cartaoFiltro === c.id 
                 ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20" 
                 : "border border-white/[0.08] text-slate-400 hover:bg-slate-800/50 hover:text-white"
@@ -194,7 +194,7 @@ export default function FaturasPage() {
 
       {/* KPIs do mês */}
       {!isLoading && faturasFiltradas.length > 0 && (
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {[
             { label: "Total do mês",  value: formatMoeda(totalMes),    color: "text-white"       },
             { label: "Em aberto",     value: formatMoeda(totalAberto),  color: "text-yellow-400"  },
