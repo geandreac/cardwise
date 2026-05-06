@@ -106,17 +106,17 @@ export default function AuthPage() {
       </div>
 
       {/* ── Painel Direito — Formulário ── */}
-      <div className="flex-1 flex items-center justify-center p-6 sm:p-10 relative">
+      <div className="flex-1 flex flex-col items-center justify-start lg:justify-center p-6 sm:p-10 relative overflow-y-auto">
         {/* Logo mobile */}
-        <div className="lg:hidden absolute top-6 left-6 flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+        <div className="lg:hidden w-full max-w-sm mb-12 flex items-center gap-3 pt-4">
+          <div className="w-9 h-9 rounded-xl bg-blue-500 flex items-center justify-center shadow-lg shadow-blue-500/20">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
               <rect x="2" y="5" width="20" height="14" rx="3" stroke="white" strokeWidth="2"/>
               <path d="M2 10h20" stroke="white" strokeWidth="2"/>
               <circle cx="7" cy="15" r="1.5" fill="white"/>
             </svg>
           </div>
-          <span className="text-lg font-bold text-white">CardWise</span>
+          <span className="text-xl font-bold text-white tracking-tight">CardWise</span>
         </div>
 
         <AuthCard />
