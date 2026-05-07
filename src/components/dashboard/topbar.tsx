@@ -61,7 +61,7 @@ export function Topbar({ user }: TopbarProps) {
     }).sort((a, b) => a.daysRemaining - b.daysRemaining);
   }, [cartoes, isLoading]);
 
-  const activeNotificationsCount = notifications.filter(n => n.isWarning).length;
+  const activeNotificationsCount = notifications.filter(n => n.isWarning && n.amount > 0).length;
 
   return (
     <header className="sticky top-0 z-30 flex items-center justify-between border-b border-white/[0.05] bg-[#020617]/80 px-4 py-3 backdrop-blur-xl md:px-6">
@@ -95,7 +95,7 @@ export function Topbar({ user }: TopbarProps) {
                 onClick={() => setShowNotifications(false)} 
               />
               {/* Modal/Dropdown */}
-              <div className="absolute right-0 top-full mt-2 w-[calc(100vw-2rem)] sm:w-72 max-h-[70vh] rounded-2xl border border-white/[0.06] bg-slate-900 p-4 shadow-2xl z-50 overflow-hidden sm:right-0 -right-2">
+              <div className="fixed inset-x-4 top-16 mt-2 w-auto sm:absolute sm:inset-auto sm:right-0 sm:top-full sm:w-80 max-h-[70vh] rounded-2xl border border-white/[0.06] bg-slate-900 p-4 shadow-2xl z-50 overflow-hidden">
                 <div className="flex items-center justify-between mb-3 border-b border-white/[0.06] pb-2">
                   <h3 className="text-sm font-semibold text-white">
                     Notificações
@@ -107,8 +107,8 @@ export function Topbar({ user }: TopbarProps) {
                   )}
                 </div>
                 <div className="space-y-3 max-h-[400px] overflow-y-auto scrollbar-none pr-1">
-                  {notifications.length > 0 ? (
-                    notifications.map(n => (
+                  {notifications.filter(n => n.amount > 0).length > 0 ? (
+                    notifications.filter(n => n.amount > 0).map(n => (
                       <div 
                         key={n.id} 
                         className={`rounded-lg p-3 transition-colors ${

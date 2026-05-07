@@ -1,6 +1,6 @@
 "use client";
 
-import useSWR from "swr";
+import useSWR, { mutate as globalMutate } from "swr";
 import { supabase } from "@/lib/supabase";
 
 export type InvoiceStatus = "open" | "closed" | "paid" | "overdue";
@@ -75,19 +75,39 @@ async function fetchInvoices(): Promise<Invoice[]> {
 }
 
 export function useInvoices() {
-  const { data, error, isLoading, mutate } = useSWR<Invoice[]>(
+  const { data, error, isLoading, mutate: revalidateInvoices } = useSWR<Invoice[]>(
     "invoices",
     fetchInvoices,
     { revalidateOnFocus: true, dedupingInterval: 30_000 }
   );
 
   async function marcarComoPaga(id: string) {
-    const { error } = await supabase
-      .from("invoices")
-      .update({ status: "paid", paid_at: new Date().toISOString() })
-      .eq("id", id);
-    if (error) throw new Error(error.message);
-    await mutate();
+    const optimisticData = data?.map((i) =>
+      i.id === id ? { ...i, status: "paid" as InvoiceStatus, paid_at: new Date().toISOString() } : i
+    );
+
+    try {
+      await revalidateInvoices(
+        async () => {
+          const { error } = await supabase
+            .from("invoices")
+            .update({ status: "paid", paid_at: new Date().toISOString() })
+            .eq("id", id);
+          if (error) throw new Error(error.message);
+          return optimisticData;
+        },
+        {
+          optimisticData,
+          rollbackOnError: true,
+          revalidate: true,
+        }
+      );
+      
+      // Invalida o cache de cartões para atualizar o limite e KPIs do dashboard
+      await globalMutate("cartoes");
+    } catch (e) {
+      console.error("Erro ao pagar fatura:", e);
+    }
   }
 
   return {

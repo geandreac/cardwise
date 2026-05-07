@@ -46,12 +46,12 @@ async function fetchCartoes(): Promise<CardComGasto[]> {
     cards.map(async (card) => {
       const { data: invoiceAtual } = await supabase
         .from("invoices")
-        .select("id, total_amount")
+        .select("id, total_amount, status")
         .eq("card_id", card.id)
         .eq("reference_month", referenciaAtual)
         .maybeSingle();
 
-      const current_spend = invoiceAtual?.total_amount ?? 0;
+      const current_spend = (invoiceAtual?.status !== "paid") ? (invoiceAtual?.total_amount ?? 0) : 0;
       const usage_percent = calcPorcentagemUso(current_spend, card.credit_limit);
 
       let next_month_spend = 0;
