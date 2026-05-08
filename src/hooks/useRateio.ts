@@ -35,15 +35,14 @@ export function useRateio(mes: string) {
       setIsError(false);
 
       const inicio = `${mes}-01`;
-      const d = new Date(mes + "-01");
-      const ano = d.getFullYear();
-      const m = d.getMonth() + 1;
+      const [anoStr, mesStr] = mes.split("-");
+      const ano = parseInt(anoStr, 10);
+      const m = parseInt(mesStr, 10);
       const isBissexto = (ano % 4 === 0 && ano % 100 !== 0) || ano % 400 === 0;
       const dias = [31, isBissexto ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
       const ultimo = dias[m - 1];
       const fim = `${mes}-${String(ultimo).padStart(2, "0")}`;
 
-      // 1. Busca transações
       const { data: txData, error: txError } = await supabase
         .from("transactions")
         .select(`
@@ -51,7 +50,8 @@ export function useRateio(mes: string) {
           buyer_id
         `)
         .gte("competence_date", inicio)
-        .lte("competence_date", fim);
+        .lte("competence_date", fim)
+        .eq("is_deleted", false);
 
       if (txError) throw txError;
 

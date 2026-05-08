@@ -73,7 +73,7 @@ export default function AnalisePage() {
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
               <XAxis dataKey="mes" tick={{ fill: "#64748b", fontSize: 11 }} axisLine={false} tickLine={false} />
               <YAxis tickFormatter={(v) => `R$${(v/1000).toFixed(0)}k`} tick={{ fill: "#64748b", fontSize: 11 }} axisLine={false} tickLine={false} width={50} />
-              <Tooltip formatter={fmtTooltip} contentStyle={TOOLTIP_STYLE} />
+              <Tooltip formatter={fmtTooltip} contentStyle={TOOLTIP_STYLE} itemStyle={{ color: "#f1f5f9" }} cursor={{ fill: "rgba(255,255,255,0.05)" }} />
               <Line type="monotone" dataKey="valor" stroke="#3b82f6" strokeWidth={2} dot={{ fill: "#3b82f6", r: 3 }} activeDot={{ r: 5 }} />
             </LineChart>
           </ResponsiveContainer>
@@ -86,7 +86,7 @@ export default function AnalisePage() {
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
               <XAxis dataKey="name" tick={{ fill: "#64748b", fontSize: 10 }} axisLine={false} tickLine={false} />
               <YAxis tickFormatter={(v) => `R$${(v/1000).toFixed(0)}k`} tick={{ fill: "#64748b", fontSize: 11 }} axisLine={false} tickLine={false} width={50} />
-              <Tooltip formatter={fmtTooltip} contentStyle={TOOLTIP_STYLE} />
+              <Tooltip formatter={fmtTooltip} contentStyle={TOOLTIP_STYLE} itemStyle={{ color: "#f1f5f9" }} cursor={{ fill: "rgba(255,255,255,0.05)" }} />
               <Bar dataKey="valor" radius={[6,6,0,0]}>
                 {porCategoria.map((_, i) => (
                   <Cell key={i} fill={CARD_COLORS[i % CARD_COLORS.length]} />
@@ -114,7 +114,7 @@ export default function AnalisePage() {
                   <Cell key={i} fill={CARD_COLORS[i % CARD_COLORS.length]} />
                 ))}
               </Pie>
-              <Tooltip formatter={fmtTooltip} contentStyle={TOOLTIP_STYLE} />
+              <Tooltip formatter={fmtTooltip} contentStyle={TOOLTIP_STYLE} itemStyle={{ color: "#f1f5f9" }} cursor={{ fill: "rgba(255,255,255,0.05)" }} />
               <Legend
                 formatter={(value) => <span style={{ color: "#94a3b8", fontSize: 11 }}>{value}</span>}
               />
@@ -129,7 +129,7 @@ export default function AnalisePage() {
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" horizontal={false} />
               <XAxis type="number" tickFormatter={(v) => `R$${(v/1000).toFixed(0)}k`} tick={{ fill: "#64748b", fontSize: 11 }} axisLine={false} tickLine={false} />
               <YAxis type="category" dataKey="name" tick={{ fill: "#94a3b8", fontSize: 11 }} axisLine={false} tickLine={false} width={90} />
-              <Tooltip formatter={fmtTooltip} contentStyle={TOOLTIP_STYLE} />
+              <Tooltip formatter={fmtTooltip} contentStyle={TOOLTIP_STYLE} itemStyle={{ color: "#f1f5f9" }} cursor={{ fill: "rgba(255,255,255,0.05)" }} />
               <Bar dataKey="valor" radius={[0,6,6,0]}>
                 {porCartao.map((_, i) => (
                   <Cell key={i} fill={CARD_COLORS[i % CARD_COLORS.length]} />

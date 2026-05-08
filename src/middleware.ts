@@ -39,8 +39,11 @@ export async function middleware(request: NextRequest) {
 
   // Usuário NÃO autenticado tentando acessar rota protegida
   if (!user && !isPublicRoute) {
+    if (pathname.startsWith("/api/")) {
+      return NextResponse.json({ error: "Sessão expirada ou não autenticado" }, { status: 401 });
+    }
     const url = request.nextUrl.clone();
-    url.pathname = "/auth"; // ← corrigido: era /login
+    url.pathname = "/auth";
     return NextResponse.redirect(url);
   }
 

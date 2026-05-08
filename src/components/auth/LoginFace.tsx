@@ -61,16 +61,17 @@ export function LoginFace({ onSwitchToRegister }: LoginFaceProps) {
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         {/* Email */}
         <div className="space-y-1.5">
-          <label className="block text-xs font-medium text-slate-400 mb-1.5">Email</label>
+          <label htmlFor="login_email" className="block text-xs font-medium text-slate-400 mb-1.5">Email</label>
           <div className="relative">
             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
             <input
               {...register("email")}
+              id="login_email"
               type="email"
               placeholder="seu@email.com"
               autoComplete="email"
               className={cn(
-                "w-full bg-[#111827] border rounded-xl py-3 pl-10 pr-4 text-sm text-white placeholder-slate-600 outline-none transition-all",
+                "w-full bg-slate-900 border rounded-xl py-3 pl-10 pr-4 text-sm text-white placeholder-slate-600 outline-none transition-all",
                 errors.email
                   ? "border-red-500/50 focus:border-red-500"
                   : "border-slate-800 focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20"
@@ -82,16 +83,17 @@ export function LoginFace({ onSwitchToRegister }: LoginFaceProps) {
 
         {/* Senha */}
         <div className="space-y-1.5">
-          <label className="block text-xs font-medium text-slate-400 mb-1.5">Senha</label>
+          <label htmlFor="login_password" className="block text-xs font-medium text-slate-400 mb-1.5">Senha</label>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
             <input
               {...register("password")}
+              id="login_password"
               type={showPassword ? "text" : "password"}
               placeholder="••••••••"
               autoComplete="current-password"
               className={cn(
-                "w-full bg-[#111827] border rounded-xl py-3 pl-10 pr-11 text-sm text-white placeholder-slate-600 outline-none transition-all",
+                "w-full bg-slate-900 border rounded-xl py-3 pl-10 pr-11 text-sm text-white placeholder-slate-600 outline-none transition-all",
                 errors.password
                   ? "border-red-500/50 focus:border-red-500"
                   : "border-slate-800 focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20"
@@ -111,11 +113,12 @@ export function LoginFace({ onSwitchToRegister }: LoginFaceProps) {
 
         {/* Lembrar + Esqueceu */}
         <div className="flex items-center justify-between">
-          <label className="flex items-center gap-2 cursor-pointer">
+          <label htmlFor="login_remember" className="flex items-center gap-2 cursor-pointer">
             <input
               {...register("remember")}
+              id="login_remember"
               type="checkbox"
-              className="w-4 h-4 rounded border-slate-700 bg-[#111827] accent-blue-500"
+              className="w-4 h-4 rounded border-slate-700 bg-slate-900 accent-blue-500"
             />
             <span className="text-xs text-slate-500">Lembrar de mim</span>
           </label>
@@ -155,7 +158,7 @@ export function LoginFace({ onSwitchToRegister }: LoginFaceProps) {
       {/* Google */}
       <button
         onClick={handleGoogleLogin}
-        className="w-full flex items-center justify-center gap-3 py-2.5 rounded-xl bg-[#111827] border border-slate-800 text-sm text-slate-400 hover:border-slate-700 hover:text-white transition-all active:scale-[0.98]"
+        className="w-full flex items-center justify-center gap-3 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-slate-400 hover:border-slate-700 hover:text-white transition-all active:scale-[0.98]"
       >
         <svg width="16" height="16" viewBox="0 0 24 24">
           <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>

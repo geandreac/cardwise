@@ -24,7 +24,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR" className={inter.variable}>
-      <body className="antialiased min-h-dvh bg-[#020617] text-[#f8fafc]">
+      <body className="antialiased min-h-dvh bg-base text-slate-50">
         {children}
       </body>
     </html>

@@ -135,7 +135,9 @@ export function NovaTransacaoDialog({ open, onClose, onSuccess }: Props) {
         // ── Compra parcelada ──
         // Gerar série completa com Big Bang: data informada = Parcela 1
         const installmentGroupId = crypto.randomUUID();
-        const perInstallmentAmount = Math.round((Number(amount) / totalParcelas) * 100) / 100;
+        const totalAmount = Number(amount);
+        const perInstallmentAmount = Math.floor((totalAmount / totalParcelas) * 100) / 100;
+        const remainder = Math.round((totalAmount - (perInstallmentAmount * totalParcelas)) * 100) / 100;
 
         // Coletar todos os meses de competência para findOrCreate de faturas
         const allCompetenceMonths = new Set<string>();
@@ -185,7 +187,7 @@ export function NovaTransacaoDialog({ open, onClose, onSuccess }: Props) {
           merchant_name: merchantName,
           category_id: categoryId || null,
           buyer_id: finalBuyerId || null,
-          amount: perInstallmentAmount,
+          amount: inst.index === 1 ? Number((perInstallmentAmount + remainder).toFixed(2)) : perInstallmentAmount,
           transaction_date: inst.txDate,
           competence_date: inst.competence,
           installment_info: `${inst.index}/${totalParcelas}`,
@@ -236,11 +238,12 @@ export function NovaTransacaoDialog({ open, onClose, onSuccess }: Props) {
 
           {/* Cartão */}
           <div className="space-y-1.5">
-            <label className="text-sm font-medium text-slate-50">Cartão</label>
+            <label htmlFor="nova_cardId" className="text-sm font-medium text-white">Cartão</label>
             <select
+              id="nova_cardId"
               value={cardId}
               onChange={(e) => setCardId(e.target.value)}
-              className="w-full rounded-xl border border-white/[0.08] bg-slate-900 px-3.5 py-2.5 text-sm text-white focus:border-blue-500/50 focus:outline-none transition-colors"
+              className="w-full rounded-xl border border-white/[0.08] bg-surface px-3.5 py-3 sm:py-2.5 text-sm text-white focus:border-blue-500/50 focus:outline-none transition-colors"
               required
             >
               <option value="">Selecione um cartão</option>
@@ -255,14 +258,19 @@ export function NovaTransacaoDialog({ open, onClose, onSuccess }: Props) {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {/* Valor */}
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-slate-50">Valor Total</label>
+              <label htmlFor="amount" className="text-sm font-medium text-white">Valor Total</label>
               <div className="relative">
-                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-medium text-slate-500">R$</span>
+                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-medium text-elevated">R$</span>
                 <input
+                  id="amount"
                   type="text"
                   value={amount === "" ? "" : formatMoeda(amount as number).replace("R$", "").trim()}
-                  onChange={(e) => setAmount(parseCurrencyInput(e.target.value))}
-                  className="w-full rounded-xl border border-white/[0.08] bg-slate-900 pl-10 pr-3.5 py-3 sm:py-2.5 text-sm text-white font-semibold tabular-nums focus:border-blue-500/50 focus:outline-none transition-colors"
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/\D/g, "");
+                    if (val === "") setAmount("");
+                    else setAmount(parseCurrencyInput(e.target.value));
+                  }}
+                  className="w-full rounded-xl border border-white/[0.08] bg-surface pl-10 pr-3.5 py-3 sm:py-2.5 text-sm text-white font-semibold tabular-nums focus:border-blue-500/50 focus:outline-none transition-colors"
                   placeholder="0,00"
                   required
                 />
@@ -271,12 +279,13 @@ export function NovaTransacaoDialog({ open, onClose, onSuccess }: Props) {
 
             {/* Data */}
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-slate-50">Data</label>
+              <label htmlFor="transactionDate" className="text-sm font-medium text-white">Data</label>
               <input
+                id="transactionDate"
                 type="date"
                 value={transactionDate}
                 onChange={(e) => setTransactionDate(e.target.value)}
-                className="w-full rounded-xl border border-white/[0.08] bg-slate-900 px-3.5 py-3 sm:py-2.5 text-sm text-white focus:border-blue-500/50 focus:outline-none transition-colors"
+                className="w-full rounded-xl border border-white/[0.08] bg-surface px-3.5 py-3 sm:py-2.5 text-sm text-white focus:border-blue-500/50 focus:outline-none transition-colors"
                 required
               />
             </div>
@@ -284,12 +293,13 @@ export function NovaTransacaoDialog({ open, onClose, onSuccess }: Props) {
 
           {/* Estabelecimento */}
           <div className="space-y-1.5">
-            <label className="text-sm font-medium text-slate-50">Estabelecimento / Descrição</label>
+            <label htmlFor="merchantName" className="text-sm font-medium text-white">Estabelecimento / Descrição</label>
             <input
+              id="merchantName"
               type="text"
               value={merchantName}
               onChange={(e) => setMerchantName(e.target.value)}
-              className="w-full rounded-xl border border-white/[0.08] bg-slate-900 px-3.5 py-2.5 text-sm text-white focus:border-blue-500/50 focus:outline-none transition-colors"
+              className="w-full rounded-xl border border-white/[0.08] bg-surface px-3.5 py-2.5 text-sm text-white focus:border-blue-500/50 focus:outline-none transition-colors"
               placeholder="Ex: Mercado Livre"
               required
             />
@@ -297,12 +307,13 @@ export function NovaTransacaoDialog({ open, onClose, onSuccess }: Props) {
 
           {/* Parcelamento */}
           <div className="space-y-1.5">
-            <label className="text-sm font-medium text-slate-50">Parcelamento?</label>
+            <label htmlFor="totalParcelas" className="text-sm font-medium text-white">Parcelamento?</label>
             <div className="flex items-center gap-3">
               <select
+                id="totalParcelas"
                 value={totalParcelas}
                 onChange={(e) => setTotalParcelas(Number(e.target.value))}
-                className="w-full rounded-xl border border-white/[0.08] bg-slate-900 px-3.5 py-2.5 text-sm text-white focus:border-blue-500/50 focus:outline-none transition-colors"
+                className="w-full rounded-xl border border-white/[0.08] bg-surface px-3.5 py-2.5 text-sm text-white focus:border-blue-500/50 focus:outline-none transition-colors"
               >
                 <option value={1}>À vista (1x)</option>
                 {Array.from({ length: 23 }, (_, i) => i + 2).map(n => (
@@ -321,11 +332,12 @@ export function NovaTransacaoDialog({ open, onClose, onSuccess }: Props) {
 
           {/* Categoria */}
           <div className="space-y-1.5">
-            <label className="text-sm font-medium text-slate-50">Categoria</label>
+            <label htmlFor="categoryId" className="text-sm font-medium text-white">Categoria</label>
             <select
+              id="categoryId"
               value={categoryId}
               onChange={(e) => setCategoryId(e.target.value)}
-              className="w-full rounded-xl border border-white/[0.08] bg-slate-900 px-3.5 py-2.5 text-sm text-white focus:border-blue-500/50 focus:outline-none transition-colors"
+              className="w-full rounded-xl border border-white/[0.08] bg-surface px-3.5 py-2.5 text-sm text-white focus:border-blue-500/50 focus:outline-none transition-colors"
             >
               <option value="">Sem categoria</option>
               {categorias.map((c) => (
@@ -338,9 +350,10 @@ export function NovaTransacaoDialog({ open, onClose, onSuccess }: Props) {
 
           {/* Comprador */}
           <div className="space-y-1.5">
-            <label className="text-sm font-medium text-slate-50">Comprador</label>
+            <label htmlFor="buyerId" className="text-sm font-medium text-white">Comprador</label>
             {!isCriandoComprador ? (
               <select
+                id="buyerId"
                 value={buyerId}
                 onChange={(e) => {
                   if (e.target.value === "NEW") {
@@ -349,7 +362,7 @@ export function NovaTransacaoDialog({ open, onClose, onSuccess }: Props) {
                     setBuyerId(e.target.value);
                   }
                 }}
-                className="w-full rounded-xl border border-white/[0.08] bg-slate-900 px-3.5 py-2.5 text-sm text-white focus:border-blue-500/50 focus:outline-none transition-colors"
+                className="w-full rounded-xl border border-white/[0.08] bg-surface px-3.5 py-2.5 text-sm text-white focus:border-blue-500/50 focus:outline-none transition-colors"
               >
                 <option value="">Eu (Padrão)</option>
                 {compradores.map((b) => (
@@ -368,7 +381,7 @@ export function NovaTransacaoDialog({ open, onClose, onSuccess }: Props) {
                   placeholder="Nome do novo comprador..."
                   value={novoComprador}
                   onChange={(e) => setNovoComprador(e.target.value)}
-                  className="flex-1 rounded-xl border border-blue-500/50 bg-slate-900 px-3.5 py-2.5 text-sm text-white focus:outline-none"
+                  className="flex-1 rounded-xl border border-blue-500/50 bg-surface px-3.5 py-2.5 text-sm text-white focus:outline-none"
                   autoFocus
                 />
                 <button
@@ -384,11 +397,12 @@ export function NovaTransacaoDialog({ open, onClose, onSuccess }: Props) {
 
           {/* Observações */}
           <div className="space-y-1.5">
-            <label className="text-sm font-medium text-slate-50">Notas / Observações</label>
+            <label htmlFor="notes" className="text-sm font-medium text-white">Notas / Observações</label>
             <textarea
+              id="notes"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="w-full rounded-xl border border-white/[0.08] bg-slate-900 px-3.5 py-2.5 text-sm text-white focus:border-blue-500/50 focus:outline-none transition-colors"
+              className="w-full rounded-xl border border-white/[0.08] bg-surface px-3.5 py-2.5 text-sm text-white focus:border-blue-500/50 focus:outline-none transition-colors"
               rows={2}
               placeholder="Opcional"
             />

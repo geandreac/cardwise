@@ -26,7 +26,7 @@ export default async function DashboardLayout({
 
   return (
     <DateProvider>
-      <div className="min-h-screen bg-[#020617] text-slate-100">
+      <div className="min-h-screen bg-base text-slate-100">
         {/* Skip link — acessibilidade */}
         <a
           href="#main-content"

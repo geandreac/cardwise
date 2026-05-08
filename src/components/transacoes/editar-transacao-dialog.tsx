@@ -27,6 +27,8 @@ export function EditarTransacaoDialog({ transacao, onClose, onSuccess }: Props) 
   const [amount, setAmount] = useState<number>(0);
   const [transactionDate, setTransactionDate] = useState("");
   const [notes, setNotes] = useState("");
+  const [isInstallment, setIsInstallment] = useState(false);
+  const [installmentsCount, setInstallmentsCount] = useState(2);
   
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -43,6 +45,8 @@ export function EditarTransacaoDialog({ transacao, onClose, onSuccess }: Props) 
       setAmount(transacao.amount);
       setTransactionDate(transacao.transaction_date || "");
       setNotes(transacao.notes || "");
+      setIsInstallment(false);
+      setInstallmentsCount(2);
       setError("");
       setIsCriandoComprador(false);
       setNovoComprador("");
@@ -69,23 +73,74 @@ export function EditarTransacaoDialog({ transacao, onClose, onSuccess }: Props) 
         }
       }
 
-      const updates = {
-        merchant_name: merchantName,
-        category_id: categoryId || null,
-        buyer_id: finalBuyerId || null,
-        amount,
-        transaction_date: transactionDate,
-        notes,
-      };
-
       if (!transacao) return;
 
-      const { error: updateError } = await supabase
-        .from("transactions")
-        .update(updates)
-        .eq("id", transacao.id);
+      const { data: userData } = await supabase.auth.getUser();
+      const { data: profile } = await supabase.from("profiles").select("id").eq("auth_user_id", userData.user?.id).single();
 
-      if (updateError) throw updateError;
+      if (isInstallment && installmentsCount > 1) {
+        const partialAmount = Math.floor((amount / installmentsCount) * 100) / 100;
+        const remainder = Math.round((amount - (partialAmount * installmentsCount)) * 100) / 100;
+        
+        // Update first installment
+        const { error: updateError } = await supabase
+          .from("transactions")
+          .update({
+            merchant_name: merchantName,
+            category_id: categoryId || null,
+            buyer_id: finalBuyerId || null,
+            amount: Number((partialAmount + remainder).toFixed(2)),
+            transaction_date: transactionDate,
+            notes,
+            installment_info: `1/${installmentsCount}`
+          })
+          .eq("id", transacao.id);
+
+        if (updateError) throw updateError;
+
+        // Create remaining installments
+        const newTx = [];
+        const baseDate = new Date(transacao.competence_date + "T00:00:00");
+        for (let i = 2; i <= installmentsCount; i++) {
+          const compDate = new Date(baseDate);
+          compDate.setMonth(compDate.getMonth() + (i - 1));
+          
+          newTx.push({
+            profile_id: profile?.id,
+            card_id: transacao.card_id,
+            category_id: categoryId || null,
+            buyer_id: finalBuyerId || null,
+            merchant_name: merchantName,
+            amount: partialAmount,
+            transaction_date: transactionDate,
+            competence_date: `${compDate.getFullYear()}-${String(compDate.getMonth() + 1).padStart(2, "0")}-01`,
+            installment_info: `${i}/${installmentsCount}`,
+            notes,
+            is_deleted: false,
+          });
+        }
+        
+        if (newTx.length > 0) {
+          const { error: insertError } = await supabase.from("transactions").insert(newTx);
+          if (insertError) throw insertError;
+        }
+      } else {
+        const updates = {
+          merchant_name: merchantName,
+          category_id: categoryId || null,
+          buyer_id: finalBuyerId || null,
+          amount,
+          transaction_date: transactionDate,
+          notes,
+        };
+
+        const { error: updateError } = await supabase
+          .from("transactions")
+          .update(updates)
+          .eq("id", transacao.id);
+
+        if (updateError) throw updateError;
+      }
 
       onSuccess();
     } catch (err: unknown) {
@@ -120,7 +175,7 @@ export function EditarTransacaoDialog({ transacao, onClose, onSuccess }: Props) 
     <Dialog open={!!transacao} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
-          <DialogTitle className="text-[#FFFFFF]">Editar Transação</DialogTitle>
+          <DialogTitle className="text-white">Editar Transação</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="mt-4 space-y-4">
@@ -131,14 +186,19 @@ export function EditarTransacaoDialog({ transacao, onClose, onSuccess }: Props) 
           )}
 
           <div className="space-y-1.5">
-            <label className="text-sm font-medium text-[#FFFFFF]">Valor</label>
+            <label htmlFor="editAmount" className="text-sm font-medium text-white">Valor</label>
             <div className="relative">
-              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-medium text-[#FFFFFF]">R$</span>
+              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-medium text-white">R$</span>
               <input
+                id="editAmount"
                 type="text"
-                value={formatMoeda(amount).replace("R$", "").trim()}
-                onChange={(e) => setAmount(parseCurrencyInput(e.target.value))}
-                className="w-full rounded-xl border border-white/[0.08] bg-slate-900 pl-10 pr-3.5 py-2.5 text-sm text-[#FFFFFF] font-semibold tabular-nums focus:border-blue-500/50 focus:outline-none transition-colors"
+                value={amount === 0 && !transacao ? "" : formatMoeda(amount).replace("R$", "").trim()}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/\D/g, "");
+                  if (val === "") setAmount(0);
+                  else setAmount(parseCurrencyInput(e.target.value));
+                }}
+                className="w-full rounded-xl border border-white/[0.08] bg-surface pl-10 pr-3.5 py-2.5 text-sm text-white font-semibold tabular-nums focus:border-blue-500/50 focus:outline-none transition-colors"
                 required
               />
             </div>
@@ -146,35 +206,38 @@ export function EditarTransacaoDialog({ transacao, onClose, onSuccess }: Props) 
 
           {/* Data */}
           <div className="space-y-1.5">
-            <label className="text-sm font-medium text-[#FFFFFF]">Data da Compra</label>
+            <label htmlFor="editTransactionDate" className="text-sm font-medium text-white">Data da Compra</label>
             <input
+              id="editTransactionDate"
               type="date"
               value={transactionDate}
               onChange={(e) => setTransactionDate(e.target.value)}
-              className="w-full rounded-xl border border-white/[0.08] bg-slate-900 px-3.5 py-2.5 text-sm text-[#FFFFFF] focus:border-blue-500/50 focus:outline-none transition-colors"
+              className="w-full rounded-xl border border-white/[0.08] bg-surface px-3.5 py-2.5 text-sm text-white focus:border-blue-500/50 focus:outline-none transition-colors"
               required
             />
           </div>
 
           {/* Estabelecimento */}
           <div className="space-y-1.5">
-            <label className="text-sm font-medium text-[#FFFFFF]">Estabelecimento / Descrição</label>
+            <label htmlFor="editMerchantName" className="text-sm font-medium text-white">Estabelecimento / Descrição</label>
             <input
+              id="editMerchantName"
               type="text"
               value={merchantName}
               onChange={(e) => setMerchantName(e.target.value)}
-              className="w-full rounded-xl border border-white/[0.08] bg-slate-900 px-3.5 py-2.5 text-sm text-[#FFFFFF] focus:border-blue-500/50 focus:outline-none transition-colors"
+              className="w-full rounded-xl border border-white/[0.08] bg-surface px-3.5 py-2.5 text-sm text-white focus:border-blue-500/50 focus:outline-none transition-colors"
               required
             />
           </div>
 
           {/* Categoria */}
           <div className="space-y-1.5">
-            <label className="text-sm font-medium text-[#FFFFFF]">Categoria</label>
+            <label htmlFor="editCategoryId" className="text-sm font-medium text-white">Categoria</label>
             <select
+              id="editCategoryId"
               value={categoryId}
               onChange={(e) => setCategoryId(e.target.value)}
-              className="w-full rounded-xl border border-white/[0.08] bg-slate-900 px-3.5 py-2.5 text-sm text-[#FFFFFF] focus:border-blue-500/50 focus:outline-none transition-colors"
+              className="w-full rounded-xl border border-white/[0.08] bg-surface px-3.5 py-2.5 text-sm text-white focus:border-blue-500/50 focus:outline-none transition-colors"
             >
               <option value="">Sem categoria</option>
               {categorias.map((c) => (
@@ -187,9 +250,10 @@ export function EditarTransacaoDialog({ transacao, onClose, onSuccess }: Props) 
 
           {/* Comprador */}
           <div className="space-y-1.5">
-            <label className="text-sm font-medium text-[#FFFFFF]">Comprador</label>
+            <label htmlFor="editBuyerId" className="text-sm font-medium text-white">Comprador</label>
             {!isCriandoComprador ? (
               <select
+                id="editBuyerId"
                 value={buyerId}
                 onChange={(e) => {
                   if (e.target.value === "NEW") {
@@ -198,7 +262,7 @@ export function EditarTransacaoDialog({ transacao, onClose, onSuccess }: Props) 
                     setBuyerId(e.target.value);
                   }
                 }}
-                className="w-full rounded-xl border border-white/[0.08] bg-slate-900 px-3.5 py-2.5 text-sm text-[#FFFFFF] focus:border-blue-500/50 focus:outline-none transition-colors"
+                className="w-full rounded-xl border border-white/[0.08] bg-surface px-3.5 py-2.5 text-sm text-white focus:border-blue-500/50 focus:outline-none transition-colors"
               >
                 <option value="">Eu (Padrão)</option>
                 {compradores.map((b) => (
@@ -217,7 +281,7 @@ export function EditarTransacaoDialog({ transacao, onClose, onSuccess }: Props) 
                   placeholder="Nome do novo comprador..."
                   value={novoComprador}
                   onChange={(e) => setNovoComprador(e.target.value)}
-                  className="flex-1 rounded-xl border border-blue-500/50 bg-slate-900 px-3.5 py-2.5 text-sm text-[#FFFFFF] focus:outline-none"
+                  className="flex-1 rounded-xl border border-blue-500/50 bg-surface px-3.5 py-2.5 text-sm text-white focus:outline-none"
                   autoFocus
                 />
                 <button
@@ -233,14 +297,50 @@ export function EditarTransacaoDialog({ transacao, onClose, onSuccess }: Props) 
 
           {/* Observações */}
           <div className="space-y-1.5">
-            <label className="text-sm font-medium text-[#FFFFFF]">Notas / Observações</label>
+            <label htmlFor="editNotes" className="text-sm font-medium text-white">Notas / Observações</label>
             <textarea
+              id="editNotes"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="w-full rounded-xl border border-white/[0.08] bg-slate-900 px-3.5 py-2.5 text-sm text-[#FFFFFF] focus:border-blue-500/50 focus:outline-none transition-colors"
+              className="w-full rounded-xl border border-white/[0.08] bg-surface px-3.5 py-2.5 text-sm text-white focus:border-blue-500/50 focus:outline-none transition-colors"
               rows={2}
             />
           </div>
+
+          {/* Parcelamento */}
+          {!transacao.installment_info && (
+            <div className="space-y-3 rounded-xl border border-white/[0.08] bg-elevated/50 p-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <label htmlFor="installment-toggle" className="text-sm font-medium text-white">Transformar em Parcelada?</label>
+                  <p className="text-[10px] text-slate-400">Isso irá dividir a compra em faturas futuras.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsInstallment(!isInstallment)}
+                  className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none ${isInstallment ? 'bg-blue-600' : 'bg-slate-600'}`}
+                >
+                  <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${isInstallment ? 'translate-x-4' : 'translate-x-1'}`} />
+                </button>
+              </div>
+
+              {isInstallment && (
+                <div className="space-y-1.5 pt-2">
+                  <label htmlFor="editInstallmentsCount" className="text-[11px] font-medium uppercase tracking-widest text-slate-400">Quantidade de Parcelas</label>
+                  <input
+                    id="editInstallmentsCount"
+                    type="number" min={2} max={48}
+                    value={installmentsCount}
+                    onChange={(e) => setInstallmentsCount(parseInt(e.target.value))}
+                    className="w-full rounded-xl border border-white/[0.08] bg-surface px-3.5 py-2.5 text-sm text-white focus:border-blue-500/50 focus:outline-none transition-colors"
+                  />
+                  <p className="text-[10px] text-slate-400 mt-1">
+                    O valor total de R$ {amount.toFixed(2)} será dividido em {installmentsCount} parcelas de R$ {(amount / (installmentsCount || 1)).toFixed(2)}.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
 
           <div className="pt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             

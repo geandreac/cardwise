@@ -46,9 +46,10 @@ function formatData(iso: string) {
 
 // ─── componente de card de fatura ────────────────────────────────────────────
 
-function InvoiceCard({ invoice, onPagar, onEditDates }: { 
+function InvoiceCard({ invoice, onPagar, onReverter, onEditDates }: { 
   invoice: Invoice; 
   onPagar: (id: string) => void;
+  onReverter: (id: string) => void;
   onEditDates: (inv: Invoice) => void;
 }) {
   const status = STATUS_CONFIG[invoice.status];
@@ -120,9 +121,17 @@ function InvoiceCard({ invoice, onPagar, onEditDates }: {
       )}
 
       {invoice.status === "paid" && invoice.paid_at && (
-        <p className="mt-3 text-center text-[10px] text-green-500">
-          ✓ Paga em {formatData(invoice.paid_at)}
-        </p>
+        <div className="mt-3 space-y-2">
+          <p className="text-center text-[10px] text-green-500">
+            ✓ Paga em {formatData(invoice.paid_at)}
+          </p>
+          <button
+            onClick={() => onReverter(invoice.id)}
+            className="w-full rounded-xl bg-slate-800 py-1.5 text-[10px] font-semibold text-slate-400 transition hover:bg-slate-700 hover:text-white"
+          >
+            Reverter pagamento
+          </button>
+        </div>
       )}
     </article>
   );
@@ -131,13 +140,23 @@ function InvoiceCard({ invoice, onPagar, onEditDates }: {
 // ─── página ───────────────────────────────────────────────────────────────────
 
 export default function FaturasPage() {
-  const { invoices, isLoading, isError, marcarComoPaga } = useInvoices();
+  const { invoices, isLoading, isError, marcarComoPaga, reverterPagamento, generateMissingInvoices, generateRollingInvoices } = useInvoices();
   const { cartoes } = useCartoes();
   const { referenceMonth: mesReferencia } = useDate();
 
   const [cartaoFiltro, setCartaoFiltro] = useState<string>("todos");
   const [deleteOpen, setDeleteOpen]     = useState(false);
   const [editDatesInvoice, setEditDatesInvoice] = useState<Invoice | null>(null);
+
+  useEffect(() => {
+    generateRollingInvoices();
+  }, []);
+
+  useEffect(() => {
+    if (mesReferencia) {
+      generateMissingInvoices(mesReferencia);
+    }
+  }, [mesReferencia]);
 
   // Filtros aplicados
   const faturasFiltradas = useMemo(() => {
@@ -149,9 +168,15 @@ export default function FaturasPage() {
   }, [invoices, mesReferencia, cartaoFiltro]);
 
   // KPIs do mês
-  const totalMes   = faturasFiltradas.reduce((s, i) => s + i.total_amount, 0);
-  const totalPagas = faturasFiltradas.filter((i) => i.status === "paid").reduce((s, i) => s + i.total_amount, 0);
-  const totalAberto = totalMes - totalPagas;
+  const { totalMes, totalPagas, totalAberto } = useMemo(() => {
+    const mes = faturasFiltradas.reduce((s, i) => s + i.total_amount, 0);
+    const pagas = faturasFiltradas.filter((i) => i.status === "paid").reduce((s, i) => s + i.total_amount, 0);
+    return {
+      totalMes: mes,
+      totalPagas: pagas,
+      totalAberto: mes - pagas
+    };
+  }, [faturasFiltradas]);
 
   return (
     <div className="space-y-6">
@@ -234,6 +259,7 @@ export default function FaturasPage() {
               key={inv.id}
               invoice={inv}
               onPagar={marcarComoPaga}
+              onReverter={reverterPagamento}
               onEditDates={setEditDatesInvoice}
             />
           ))}

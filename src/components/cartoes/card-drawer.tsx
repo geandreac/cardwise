@@ -106,7 +106,7 @@ export function CardDrawer({ open, cartao, onClose, onSave, isSaving }: Props) {
         onClick={onClose}
       />
       <aside
-        className={`fixed right-0 top-0 z-50 flex h-full w-full max-w-md flex-col border-l border-white/[0.06] bg-slate-900 shadow-2xl transition-transform duration-300 ${open ? "translate-x-0" : "translate-x-full"}`}
+        className={`fixed right-0 top-0 z-50 flex h-[100dvh] w-full max-w-md flex-col border-l border-white/[0.06] bg-slate-900 shadow-2xl transition-transform duration-300 pt-[env(safe-area-inset-top)] ${open ? "translate-x-0" : "translate-x-full"}`}
       >
         <div className="flex items-center justify-between border-b border-white/[0.06] px-5 py-4">
           <h2 className="text-sm font-semibold text-white">

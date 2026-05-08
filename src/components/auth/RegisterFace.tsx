@@ -112,16 +112,17 @@ export function RegisterFace({ onSwitchToLogin }: RegisterFaceProps) {
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         {/* Nome */}
         <div>
-          <label className="block text-xs font-medium text-slate-400 mb-1.5">Nome completo</label>
+          <label htmlFor="reg_full_name" className="block text-xs font-medium text-slate-400 mb-1.5">Nome completo</label>
           <div className="relative">
             <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
             <input
               {...register("full_name")}
+              id="reg_full_name"
               type="text"
               placeholder="Seu nome"
               autoComplete="name"
               className={cn(
-                "w-full bg-[#111827] border rounded-xl py-3 pl-10 pr-4 text-sm text-white placeholder-slate-600 outline-none transition-all",
+                "w-full bg-slate-900 border rounded-xl py-3 pl-10 pr-4 text-sm text-white placeholder-slate-600 outline-none transition-all",
                 errors.full_name ? "border-red-500/50" : "border-slate-800 focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20"
               )}
             />
@@ -131,16 +132,17 @@ export function RegisterFace({ onSwitchToLogin }: RegisterFaceProps) {
 
         {/* Email */}
         <div>
-          <label className="block text-xs font-medium text-slate-400 mb-1.5">Email</label>
+          <label htmlFor="reg_email" className="block text-xs font-medium text-slate-400 mb-1.5">Email</label>
           <div className="relative">
             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
             <input
               {...register("email")}
+              id="reg_email"
               type="email"
               placeholder="seu@email.com"
               autoComplete="email"
               className={cn(
-                "w-full bg-[#111827] border rounded-xl py-3 pl-10 pr-4 text-sm text-white placeholder-slate-600 outline-none transition-all",
+                "w-full bg-slate-900 border rounded-xl py-3 pl-10 pr-4 text-sm text-white placeholder-slate-600 outline-none transition-all",
                 errors.email ? "border-red-500/50" : "border-slate-800 focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20"
               )}
             />
@@ -150,17 +152,18 @@ export function RegisterFace({ onSwitchToLogin }: RegisterFaceProps) {
 
         {/* Senha + Strength */}
         <div>
-          <label className="block text-xs font-medium text-slate-400 mb-1.5">Senha</label>
+          <label htmlFor="reg_password" className="block text-xs font-medium text-slate-400 mb-1.5">Senha</label>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
             <input
               {...register("password")}
+              id="reg_password"
               type={showPassword ? "text" : "password"}
               placeholder="Mín. 8 caracteres"
               autoComplete="new-password"
               onChange={(e) => setPasswordValue(e.target.value)}
               className={cn(
-                "w-full bg-[#111827] border rounded-xl py-3 pl-10 pr-11 text-sm text-white placeholder-slate-600 outline-none transition-all",
+                "w-full bg-slate-900 border rounded-xl py-3 pl-10 pr-11 text-sm text-white placeholder-slate-600 outline-none transition-all",
                 errors.password ? "border-red-500/50" : "border-slate-800 focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20"
               )}
             />
@@ -195,16 +198,17 @@ export function RegisterFace({ onSwitchToLogin }: RegisterFaceProps) {
 
         {/* Confirmar senha */}
         <div>
-          <label className="block text-xs font-medium text-slate-400 mb-1.5">Confirmar senha</label>
+          <label htmlFor="reg_confirm_password" className="block text-xs font-medium text-slate-400 mb-1.5">Confirmar senha</label>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
             <input
               {...register("confirm_password")}
+              id="reg_confirm_password"
               type={showConfirm ? "text" : "password"}
               placeholder="Repita a senha"
               autoComplete="new-password"
               className={cn(
-                "w-full bg-[#111827] border rounded-xl py-3 pl-10 pr-11 text-sm text-white placeholder-slate-600 outline-none transition-all",
+                "w-full bg-slate-900 border rounded-xl py-3 pl-10 pr-11 text-sm text-white placeholder-slate-600 outline-none transition-all",
                 errors.confirm_password ? "border-red-500/50" : "border-slate-800 focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20"
               )}
             />
@@ -221,11 +225,12 @@ export function RegisterFace({ onSwitchToLogin }: RegisterFaceProps) {
         </div>
 
         {/* Termos LGPD */}
-        <label className="flex items-start gap-2.5 cursor-pointer">
+        <label htmlFor="reg_terms" className="flex items-start gap-2.5 cursor-pointer">
           <input
             {...register("terms")}
+            id="reg_terms"
             type="checkbox"
-            className="w-4 h-4 mt-0.5 rounded border-slate-700 bg-[#111827] accent-blue-500"
+            className="w-4 h-4 mt-0.5 rounded border-slate-700 bg-slate-900 accent-blue-500"
           />
           <span className="text-xs text-slate-500 leading-relaxed">
             Concordo com os{" "}

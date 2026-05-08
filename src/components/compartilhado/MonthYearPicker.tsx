@@ -16,7 +16,8 @@ const meses = [
   "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
 ];
 
-const anos = Array.from({ length: 11 }, (_, i) => 2024 + i);
+const currentYear = new Date().getFullYear();
+const anos = Array.from({ length: 5 }, (_, i) => currentYear - 2 + i);
 
 export function MonthYearPicker({ open, onClose, value, onChange }: Props) {
   const [selectedYear, setSelectedYear] = useState(parseInt(value.split("-")[0]));

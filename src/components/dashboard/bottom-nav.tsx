@@ -45,7 +45,7 @@ export function BottomNav() {
   return (
     <nav
       aria-label="Navegação principal"
-      className="fixed bottom-0 left-0 right-0 z-40 flex items-center justify-around border-t border-white/[0.06] bg-[#020617]/95 px-2 backdrop-blur-xl md:hidden"
+      className="fixed bottom-0 left-0 right-0 z-40 flex items-center justify-around border-t border-white/[0.06] bg-base/95 px-2 backdrop-blur-xl md:hidden"
       style={{
         paddingBottom: "env(safe-area-inset-bottom, 6px)",
         paddingTop: "6px",
@@ -87,7 +87,7 @@ export function BottomNav() {
             <span>Mais</span>
           </button>
         </DrawerTrigger>
-        <DrawerContent className="bg-[#0f172a] border-slate-800">
+        <DrawerContent className="bg-surface border-slate-800">
           <DrawerHeader className="border-b border-white/[0.05] pb-4">
             <DrawerTitle className="text-left text-sm font-semibold text-slate-400">
               Menu de Navegação

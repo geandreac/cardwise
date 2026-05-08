@@ -44,10 +44,23 @@ export function usePerfil() {
     await mutate();
   }
 
+  async function deletarConta() {
+    // Chama a RPC criada no banco de dados para deletar usuário
+    const { error } = await supabase.rpc("delete_my_account");
+    if (error) {
+      console.error("Erro ao deletar conta:", error);
+      throw new Error(error.message);
+    }
+    // Faz o logout local e redireciona (Next.js fará o redirect se houver proteção de rota)
+    await supabase.auth.signOut();
+    window.location.href = "/"; // Redirecionamento forçado para a página inicial
+  }
+
   return {
     perfil:           data ?? null,
     isLoading,
     isError:          !!error,
     atualizarPerfil,
+    deletarConta,
   };
 }

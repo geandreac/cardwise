@@ -163,6 +163,8 @@ export default function ProjecoesPage() {
                 <Tooltip
                   formatter={(v: any) => [formatMoeda(Number(v)), "Total"]}
                   contentStyle={TOOLTIP_STYLE}
+                  itemStyle={{ color: "#f1f5f9" }}
+                  cursor={{ fill: "rgba(255,255,255,0.05)" }}
                 />
                 <Bar dataKey="valor" radius={[6, 6, 0, 0]} maxBarSize={40}>
                   {chartData.map((_, idx) => (

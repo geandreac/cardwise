@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Bell } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 import { LogoutButton } from "@/components/dashboard/logout-button";
@@ -64,7 +65,7 @@ export function Topbar({ user }: TopbarProps) {
   const activeNotificationsCount = notifications.filter(n => n.isWarning && n.amount > 0).length;
 
   return (
-    <header className="sticky top-0 z-30 flex items-center justify-between border-b border-white/[0.05] bg-[#020617]/80 px-4 py-3 backdrop-blur-xl md:px-6">
+    <header className="sticky top-0 z-30 flex items-center justify-between border-b border-white/[0.05] bg-base/80 px-4 py-3 backdrop-blur-xl md:px-6">
       <div>
         <p className="text-sm font-semibold text-white">Bem-vindo, {name}!</p>
       </div>
@@ -87,75 +88,86 @@ export function Topbar({ user }: TopbarProps) {
             )}
           </button>
 
-          {showNotifications && (
-            <>
-              {/* Overlay invisível para fechar ao clicar fora */}
-              <div 
-                className="fixed inset-0 z-40" 
-                onClick={() => setShowNotifications(false)} 
-              />
-              {/* Modal/Dropdown */}
-              <div className="fixed inset-x-4 top-16 mt-2 w-auto sm:absolute sm:inset-auto sm:right-0 sm:top-full sm:w-80 max-h-[70vh] rounded-2xl border border-white/[0.06] bg-slate-900 p-4 shadow-2xl z-50 overflow-hidden">
-                <div className="flex items-center justify-between mb-3 border-b border-white/[0.06] pb-2">
-                  <h3 className="text-sm font-semibold text-white">
-                    Notificações
-                  </h3>
-                  {activeNotificationsCount > 0 && (
-                    <span className="text-[10px] bg-red-500/20 text-red-400 px-2 py-0.5 rounded-full font-bold">
-                      {activeNotificationsCount} Alerta{activeNotificationsCount > 1 ? 's' : ''}
-                    </span>
-                  )}
-                </div>
-                <div className="space-y-3 max-h-[400px] overflow-y-auto scrollbar-none pr-1">
-                  {notifications.filter(n => n.amount > 0).length > 0 ? (
-                    notifications.filter(n => n.amount > 0).map(n => (
-                      <div 
-                        key={n.id} 
-                        className={`rounded-lg p-3 transition-colors ${
-                          n.isCritical ? 'bg-red-500/10 border border-red-500/20' : 
-                          n.isWarning ? 'bg-yellow-500/10 border border-yellow-500/20' : 
-                          'bg-white/5 border border-white/10'
-                        }`}
-                      >
-                        <div className="flex justify-between items-start">
-                          <p className={`text-[11px] font-bold ${
-                            n.isCritical ? 'text-red-400' : 
-                            n.isWarning ? 'text-yellow-400' : 
-                            'text-slate-300'
-                          }`}>
-                            Vencimento {n.cardName}
-                          </p>
-                          <span className="text-[10px] text-slate-500 font-mono">
-                            {formatMoeda(n.amount)}
-                          </span>
-                        </div>
-                        <p className="mt-1 text-[11px] text-slate-300">
-                          {n.daysRemaining === 0 ? (
-                            <span className="font-bold text-red-400">Vence HOJE!</span>
-                          ) : n.daysRemaining === 1 ? (
-                            "Vence amanhã."
-                          ) : (
-                            `Vence em ${n.daysRemaining} dias.`
-                          )}
-                        </p>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-center py-4 text-xs text-slate-500">
-                      Nenhuma notificação por enquanto.
-                    </p>
-                  )}
-                  
-                  {/* Footer estático opcional */}
-                  <div className="pt-2">
-                    <p className="text-[9px] text-center text-slate-600 uppercase tracking-widest">
-                      CardWise Intelligence
-                    </p>
+          <AnimatePresence>
+            {showNotifications && (
+              <>
+                {/* Overlay invisível para fechar ao clicar fora */}
+                <motion.div 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="fixed inset-0 z-40" 
+                  onClick={() => setShowNotifications(false)} 
+                />
+                {/* Modal/Dropdown */}
+                <motion.div 
+                  initial={{ opacity: 0, scale: 0.95, y: 10, filter: "blur(4px)" }}
+                  animate={{ opacity: 1, scale: 1, y: 0, filter: "blur(0px)" }}
+                  exit={{ opacity: 0, scale: 0.95, y: 10, filter: "blur(4px)" }}
+                  transition={{ duration: 0.2, ease: "easeOut" }}
+                  className="fixed inset-x-4 top-16 mt-2 w-auto sm:absolute sm:inset-auto sm:right-0 sm:top-full sm:w-80 max-h-[70vh] rounded-2xl border border-white/[0.06] bg-surface p-4 shadow-2xl z-50 overflow-hidden"
+                >
+                  <div className="flex items-center justify-between mb-3 border-b border-white/[0.06] pb-2">
+                    <h3 className="text-sm font-semibold text-white">
+                      Notificações
+                    </h3>
+                    {activeNotificationsCount > 0 && (
+                      <span className="text-[10px] bg-red-500/20 text-red-400 px-2 py-0.5 rounded-full font-bold">
+                        {activeNotificationsCount} Alerta{activeNotificationsCount > 1 ? 's' : ''}
+                      </span>
+                    )}
                   </div>
-                </div>
-              </div>
-            </>
-          )}
+                  <div className="space-y-3 max-h-[400px] overflow-y-auto scrollbar-none pr-1">
+                    {notifications.filter(n => n.amount > 0).length > 0 ? (
+                      notifications.filter(n => n.amount > 0).map(n => (
+                        <div 
+                          key={n.id} 
+                          className={`rounded-lg p-3 transition-colors ${
+                            n.isCritical ? 'bg-red-500/10 border border-red-500/20' : 
+                            n.isWarning ? 'bg-yellow-500/10 border border-yellow-500/20' : 
+                            'bg-white/5 border border-white/10'
+                          }`}
+                        >
+                          <div className="flex justify-between items-start">
+                            <p className={`text-[11px] font-bold ${
+                              n.isCritical ? 'text-red-400' : 
+                              n.isWarning ? 'text-yellow-400' : 
+                              'text-slate-300'
+                            }`}>
+                              Vencimento {n.cardName}
+                            </p>
+                            <span className="text-[10px] text-slate-500 font-mono">
+                              {formatMoeda(n.amount)}
+                            </span>
+                          </div>
+                          <p className="mt-1 text-[11px] text-slate-300">
+                            {n.daysRemaining === 0 ? (
+                              <span className="font-bold text-red-400">Vence HOJE!</span>
+                            ) : n.daysRemaining === 1 ? (
+                              "Vence amanhã."
+                            ) : (
+                              `Vence em ${n.daysRemaining} dias.`
+                            )}
+                          </p>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-center py-4 text-xs text-slate-500">
+                        Nenhuma notificação por enquanto.
+                      </p>
+                    )}
+                    
+                    {/* Footer estático opcional */}
+                    <div className="pt-2">
+                      <p className="text-[9px] text-center text-slate-600 uppercase tracking-widest">
+                        CardWise Intelligence
+                      </p>
+                    </div>
+                  </div>
+                </motion.div>
+              </>
+            )}
+          </AnimatePresence>
         </div>
 
         {/* Logout — visível só no mobile (sidebar cobre no desktop) */}
@@ -168,11 +180,7 @@ export function Topbar({ user }: TopbarProps) {
           aria-label={`Avatar de ${name}`}
           className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-blue-500 to-blue-700 text-xs font-bold text-white select-none"
         >
-          {user.user_metadata?.avatar_url ? (
-            <img src={user.user_metadata.avatar_url} alt="Avatar" className="h-full w-full object-cover" />
-          ) : (
-            initials
-          )}
+          {initials}
         </div>
       </div>
     </header>

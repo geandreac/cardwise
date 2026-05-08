@@ -16,7 +16,7 @@ export function KpiSection() {
   const limiteTotal    = cartoes.reduce((s, c) => s + c.credit_limit,  0);
   const limiteDisp     = limite_disponivel;
   const usagePercent   = limiteTotal > 0
-    ? Math.round((gastoTotal / limiteTotal) * 100)
+    ? Math.round(((limiteTotal - limiteDisp) / limiteTotal) * 100)
     : 0;
 
   // cartão com vencimento mais próximo
@@ -97,7 +97,7 @@ export function KpiSection() {
       </section>
 
       <ProgressCard
-        used={gastoTotal}
+        used={limiteTotal - limiteDisp}
         total={limiteTotal}
         percent={usagePercent}
       />

@@ -41,83 +41,88 @@ async function fetchCartoes(): Promise<CardComGasto[]> {
 
   const referenciaAtual = mesAtual();
   const referenciaProxima = mesSeguinte();
+  const cardIds = cards.map(c => c.id);
 
-  return Promise.all(
-    cards.map(async (card) => {
-      const { data: invoiceAtual } = await supabase
-        .from("invoices")
-        .select("id, total_amount, status")
-        .eq("card_id", card.id)
-        .eq("reference_month", referenciaAtual)
-        .maybeSingle();
+  // 1. Buscar faturas atuais e próximas em lote
+  const { data: invoices } = await supabase
+    .from("invoices")
+    .select("id, card_id, total_amount, status, reference_month")
+    .in("card_id", cardIds)
+    .in("reference_month", [referenciaAtual, referenciaProxima]);
 
-      const current_spend = (invoiceAtual?.status !== "paid") ? (invoiceAtual?.total_amount ?? 0) : 0;
-      const usage_percent = calcPorcentagemUso(current_spend, card.credit_limit);
+  const invoicesData = invoices ?? [];
 
-      let next_month_spend = 0;
+  // 2. Buscar parcelas de faturas atuais (se próxima não existir)
+  const currentInvoiceIds = invoicesData
+    .filter(inv => inv.reference_month === referenciaAtual)
+    .map(inv => inv.id);
 
-      const { data: invoiceProxima } = await supabase
-        .from("invoices")
-        .select("total_amount")
-        .eq("card_id", card.id)
-        .eq("reference_month", referenciaProxima)
-        .maybeSingle();
+  let currentTxData: { invoice_id: string; amount: number; installment_info: string }[] = [];
+  if (currentInvoiceIds.length > 0) {
+    const { data: currentTransactions } = await supabase
+      .from("transactions")
+      .select("invoice_id, amount, installment_info")
+      .in("invoice_id", currentInvoiceIds)
+      .not("installment_info", "is", null);
+    currentTxData = currentTransactions ?? [];
+  }
 
-      if (invoiceProxima) {
-        next_month_spend = invoiceProxima.total_amount ?? 0;
-      } else if (invoiceAtual?.id) {
-        const { data: parcelas } = await supabase
-          .from("transactions")
-          .select("amount, installment_info")
-          .eq("invoice_id", invoiceAtual.id)
-          .not("installment_info", "is", null);
+  // 3. Buscar todas as transações futuras (projetadas)
+  const { data: futureTransactions } = await supabase
+    .from("transactions")
+    .select("amount, card_id, competence_date")
+    .in("card_id", cardIds)
+    .gt("competence_date", referenciaAtual)
+    .eq("is_deleted", false);
 
-        next_month_spend = (parcelas ?? []).reduce((acc, tx) => {
-          if (
-            tx.installment_info &&
-            temParcelaFutura(tx.installment_info as string)
-          ) {
-            return acc + (tx.amount ?? 0);
-          }
-          return acc;
-        }, 0);
-      }
+  const futureTxData = futureTransactions ?? [];
 
-      // Calcular total de parcelas futuras (todas as faturas projetadas)
-      const { data: futureTransactions } = await supabase
-        .from("transactions")
-        .select("amount, competence_date")
-        .eq("card_id", card.id)
-        .gt("competence_date", referenciaAtual)
-        .eq("is_deleted", false);
+  return cards.map((card) => {
+    const invoiceAtual = invoicesData.find(inv => inv.card_id === card.id && inv.reference_month === referenciaAtual);
+    const invoiceProxima = invoicesData.find(inv => inv.card_id === card.id && inv.reference_month === referenciaProxima);
 
-      const future_installments_total = (futureTransactions ?? []).reduce(
-        (acc, tx) => acc + (tx.amount ?? 0), 0
-      );
+    const current_spend = (invoiceAtual?.status !== "paid") ? (invoiceAtual?.total_amount ?? 0) : 0;
+    const usage_percent = calcPorcentagemUso(current_spend, card.credit_limit);
 
-      return {
-        id: card.id as string,
-        profile_id: card.profile_id as string,
-        nickname: card.nickname as string,
-        brand: card.brand as CardBrand,
-        last_four: card.last_four as string,
-        holder_name: card.holder_name as string,
-        credit_limit: card.credit_limit as number,
-        due_day: card.due_day as number,
-        closing_day: card.closing_day as number,
-        days_between_closing_and_due: (card.days_between_closing_and_due ?? 7) as number,
-        due_next_month: card.due_next_month as boolean,
-        theme_color: card.theme_color as CardTheme,
-        is_active: card.is_active as boolean,
-        created_at: card.created_at as string,
-        updated_at: card.updated_at as string,
-        current_spend,
-        usage_percent,
-        next_month_spend,
-        future_installments_total,
-      };
-    })
-  );
+    let next_month_spend = 0;
+
+    if (invoiceProxima) {
+      next_month_spend = invoiceProxima.total_amount ?? 0;
+    } else if (invoiceAtual?.id) {
+      const parcelas = currentTxData.filter(tx => tx.invoice_id === invoiceAtual.id);
+      next_month_spend = parcelas.reduce((acc, tx) => {
+        if (tx.installment_info && temParcelaFutura(tx.installment_info)) {
+          return acc + (tx.amount ?? 0);
+        }
+        return acc;
+      }, 0);
+    }
+
+    const myFutureTxs = futureTxData.filter(tx => tx.card_id === card.id);
+    const future_installments_total = myFutureTxs.reduce((acc, tx) => acc + (tx.amount ?? 0), 0);
+
+    return {
+      id: card.id as string,
+      profile_id: card.profile_id as string,
+      nickname: card.nickname as string,
+      brand: card.brand as CardBrand,
+      last_four: card.last_four as string,
+      holder_name: card.holder_name as string,
+      credit_limit: card.credit_limit as number,
+      due_day: card.due_day as number,
+      closing_day: card.closing_day as number,
+      days_between_closing_and_due: (card.days_between_closing_and_due ?? 7) as number,
+      due_next_month: card.due_next_month as boolean,
+      theme_color: card.theme_color as CardTheme,
+      is_active: card.is_active as boolean,
+      created_at: card.created_at as string,
+      updated_at: card.updated_at as string,
+      current_spend,
+      usage_percent,
+      next_month_spend,
+      future_installments_total,
+    };
+  });
 }
 
 const CACHE_KEY = "cartoes";

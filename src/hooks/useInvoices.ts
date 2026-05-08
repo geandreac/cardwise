@@ -110,10 +110,64 @@ export function useInvoices() {
     }
   }
 
+  async function reverterPagamento(id: string) {
+    const optimisticData = data?.map((i) =>
+      i.id === id ? { ...i, status: "closed" as InvoiceStatus, paid_at: null } : i
+    );
+
+    try {
+      await revalidateInvoices(
+        async () => {
+          const { error } = await supabase
+            .from("invoices")
+            .update({ status: "closed", paid_at: null })
+            .eq("id", id);
+          if (error) throw new Error(error.message);
+          return optimisticData;
+        },
+        {
+          optimisticData,
+          rollbackOnError: true,
+          revalidate: true,
+        }
+      );
+      
+      await globalMutate("cartoes");
+    } catch (e) {
+      console.error("Erro ao reverter pagamento:", e);
+    }
+  }
+
+  async function generateMissingInvoices(targetMonth: string) {
+    try {
+      // targetMonth vem no formato YYYY-MM
+      const { error } = await supabase.rpc("generate_missing_invoices", {
+        target_month: `${targetMonth}-01`
+      });
+      if (error) throw new Error(error.message);
+      await revalidateInvoices();
+    } catch (e) {
+      console.error("Erro ao gerar faturas faltantes:", e);
+    }
+  }
+
+  async function generateRollingInvoices() {
+    try {
+      const { error } = await supabase.rpc("generate_rolling_invoices", { months_ahead: 24 });
+      if (error) throw new Error(error.message);
+      await revalidateInvoices();
+    } catch (e) {
+      console.error("Erro ao gerar janela rolante de faturas:", e);
+    }
+  }
+
   return {
     invoices:      data ?? [],
     isLoading,
     isError:       !!error,
     marcarComoPaga,
+    reverterPagamento,
+    generateMissingInvoices,
+    generateRollingInvoices,
   };
 }
