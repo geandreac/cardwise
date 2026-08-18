@@ -29,7 +29,13 @@ export async function extrairFatura(pdfBytes: Uint8Array): Promise<ResultadoExtr
   if (geminiEstaConfigurado()) {
     try {
       const fatura = await parseFaturaComGemini(pdfBytes);
-      if (fatura) return { fatura, provedor: "gemini" };
+      if (fatura) {
+        // Registrado também no sucesso: o fallback é silencioso e muda o modo de
+        // leitura (PDF nativo vs. texto extraído), então sem esta linha não há
+        // como saber pelos logs qual caminho processou cada fatura.
+        console.info(`[Extrator] Fatura lida pelo Gemini — ${fatura.transactions.length} transações.`);
+        return { fatura, provedor: "gemini" };
+      }
       erroGemini = "Gemini não retornou dados.";
     } catch (error) {
       erroGemini = error instanceof Error ? error.message : "erro desconhecido";
@@ -54,6 +60,8 @@ export async function extrairFatura(pdfBytes: Uint8Array): Promise<ResultadoExtr
 
   const fatura = await parseFaturaComGroq(texto);
   if (!fatura) throw new Error(`Falha na extração. Gemini: ${erroGemini}. Groq não retornou dados.`);
+
+  console.warn(`[Extrator] Fatura lida pela Groq (fallback) — ${fatura.transactions.length} transações.`);
 
   return {
     fatura,
