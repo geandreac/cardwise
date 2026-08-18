@@ -3,10 +3,10 @@
 
 import { useTransacoes } from "@/hooks/useTransacoes";
 import { Skeleton } from "@/components/compartilhado/Skeleton";
-import { formatMoeda } from "@/lib/utils";
+import { formatMoeda, parseDataLocal } from "@/lib/utils";
 
 function formatDataHora(iso: string): string {
-  const data = new Date(iso);
+  const data = parseDataLocal(iso);
   const hoje = new Date();
   const ontem = new Date();
   ontem.setDate(hoje.getDate() - 1);

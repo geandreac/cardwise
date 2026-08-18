@@ -9,7 +9,19 @@ export interface ParsedInvoice {
   bank: string;
   due_date: string;
   closing_date: string;
+  /** Valor que o titular paga neste mês (inclui saldo anterior e pagamentos). */
   total_amount: number;
+  /**
+   * Soma das compras/débitos DO PERÍODO, conforme declarada pela própria fatura
+   * (linha "Compras/Débitos", "Compras nacionais" etc.). `null` quando a fatura
+   * não traz esse detalhamento.
+   *
+   * Existe porque `total_amount` NÃO serve para conferir a extração: numa fatura
+   * com saldo anterior, total = saldo anterior − pagamentos + compras. Conferir
+   * a soma das transações contra o total acusaria divergência numa extração
+   * perfeitamente correta.
+   */
+  period_debits?: number | null;
   reference_month: string;
   transactions: ParsedTransaction[];
 }

@@ -23,10 +23,22 @@ export function parseCurrencyInput(value: string): number {
   return Number(numericValue) / 100;
 }
 
+// Converte data em Date no fuso local, sem deslocar o dia.
+// new Date("2024-04-01") é interpretado como UTC — em qualquer fuso a oeste
+// de Greenwich isso vira 31/03 na hora de exibir. Datas puras (AAAA-MM-DD)
+// precisam ser montadas como data local; timestamps completos passam direto.
+// Uso: parseDataLocal("2024-04-01") → Date de 01/04/2024 00:00 local
+export function parseDataLocal(data: string): Date {
+  const soData = /^(\d{4})-(\d{2})-(\d{2})$/.exec(data);
+  if (!soData) return new Date(data);
+  const [, ano, mes, dia] = soData;
+  return new Date(Number(ano), Number(mes) - 1, Number(dia));
+}
+
 // Formata data ISO para pt-BR
 // Uso: formatData("2024-04-01") → "01/04/2024"
 export function formatData(data: string): string {
-  return new Intl.DateTimeFormat("pt-BR").format(new Date(data));
+  return new Intl.DateTimeFormat("pt-BR").format(parseDataLocal(data));
 }
 
 // Formata data por extenso
@@ -36,7 +48,7 @@ export function formatDataExtenso(data: string): string {
     day: "numeric",
     month: "long",
     year: "numeric",
-  }).format(new Date(data));
+  }).format(parseDataLocal(data));
 }
 
 // Retorna mês/ano abreviado
@@ -45,7 +57,22 @@ export function formatMesAno(data: string): string {
   return new Intl.DateTimeFormat("pt-BR", {
     month: "short",
     year: "numeric",
-  }).format(new Date(data));
+  }).format(parseDataLocal(data));
+}
+
+// Formata valor curto para eixo de gráfico.
+// Dividir sempre por mil transforma qualquer valor abaixo de R$ 1.000 em
+// "R$0k" e gera rótulos repetidos no eixo, então a escala é escolhida por
+// faixa de grandeza.
+// Uso: formatEixoValor(300) → "R$300" | formatEixoValor(1500) → "R$1,5k"
+export function formatEixoValor(valor: number): string {
+  const abs = Math.abs(valor);
+  const sinal = valor < 0 ? "-" : "";
+  const enxuto = (n: number) => n.toFixed(1).replace(/\.0$/, "").replace(".", ",");
+
+  if (abs >= 1_000_000) return `${sinal}R$${enxuto(abs / 1_000_000)}M`;
+  if (abs >= 1_000) return `${sinal}R$${enxuto(abs / 1_000)}k`;
+  return `${sinal}R$${Math.round(abs)}`;
 }
 
 // Calcula porcentagem de uso do limite

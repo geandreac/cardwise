@@ -6,7 +6,7 @@ import { FileDown, Loader2 } from "lucide-react";
 import { useCartoes } from "@/hooks/useCartoes";
 import { useInvoices } from "@/hooks/useInvoices";
 import { usePerfil } from "@/hooks/usePerfil";
-import { formatMoeda } from "@/lib/utils";
+import { formatMoeda, parseDataLocal } from "@/lib/utils";
 import { Skeleton } from "@/components/compartilhado/Skeleton";
 import {
   Document, Page, Text, View, StyleSheet, pdf,
@@ -91,7 +91,7 @@ function RelatorioPDF({ nomeUsuario, mesRef, gastoTotal, limiteTotal, cartoes, f
               <Text style={styles.label}>{f.card_nickname}</Text>
               <Text style={styles.value}>
                 {formatMoeda(f.total_amount)} · {f.status} · venc.{" "}
-                {new Date(f.due_date).toLocaleDateString("pt-BR")}
+                {parseDataLocal(f.due_date).toLocaleDateString("pt-BR")}
               </Text>
             </View>
           ))}

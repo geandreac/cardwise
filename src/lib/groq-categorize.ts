@@ -1,4 +1,7 @@
-import Groq from "groq-sdk";
+import { groqChatJSON, extrairJSON } from "./groq-client";
+
+/** Quantos estabelecimentos por chamada — evita respostas truncadas em faturas longas. */
+const LOTE_CATEGORIZACAO = 60;
 
 export type CategoriaParaGroq = {
   id: string;
@@ -24,17 +27,38 @@ export async function categorizarTransacoes(
 
   if (merchants.length === 0 || categorias.length === 0) return resultado;
 
-  const groq = new Groq({
-    apiKey: process.env.GROQ_API_KEY,
-  });
-
   const merchantsUnicos = [...new Set(merchants)];
+  const idsValidos = new Set(categorias.map((c) => c.id));
 
   const listaCategorias = categorias
     .map((c) => `- ${c.id} | ${c.name} | ${c.emoji}`)
     .join("\n");
 
-  const listaMerchants = merchantsUnicos.map((m) => `- ${m}`).join("\n");
+  // Processa em lotes: uma fatura com centenas de estabelecimentos estourava
+  // o limite de saída e devolvia JSON truncado (todos ficavam sem categoria).
+  const lotes: string[][] = [];
+  for (let i = 0; i < merchantsUnicos.length; i += LOTE_CATEGORIZACAO) {
+    lotes.push(merchantsUnicos.slice(i, i + LOTE_CATEGORIZACAO));
+  }
+
+  const respostas = await Promise.all(
+    lotes.map((lote) => categorizarLote(lote, listaCategorias))
+  );
+
+  for (const parcial of respostas) {
+    for (const [merchant, categoryId] of Object.entries(parcial)) {
+      if (idsValidos.has(categoryId)) resultado.set(merchant, categoryId);
+    }
+  }
+
+  return resultado;
+}
+
+async function categorizarLote(
+  lote: string[],
+  listaCategorias: string
+): Promise<Record<string, string>> {
+  const listaMerchants = lote.map((m) => `- ${m}`).join("\n");
 
   const prompt = `
 Você é um classificador de transações de cartão de crédito do Brasil.
@@ -58,35 +82,16 @@ FORMATO EXATO DE RESPOSTA:
 `.trim();
 
   try {
-    const completion = await groq.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
+    const content = await groqChatJSON({
       temperature: 0.1,
-      response_format: { type: "json_object" },
-      messages: [
-        {
-          role: "user",
-          content: prompt,
-        },
-      ],
+      maxTokens: 8_000,
+      messages: [{ role: "user", content: prompt }],
     });
 
-    const content = completion.choices[0]?.message?.content ?? "{}";
-    const jsonMatch = content.match(/\{[\s\S]*\}/);
-
-    if (!jsonMatch) return resultado;
-
-    const parsed = JSON.parse(jsonMatch[0]) as Record<string, string>;
-    const idsValidos = new Set(categorias.map((c) => c.id));
-
-    for (const [merchant, categoryId] of Object.entries(parsed)) {
-      if (idsValidos.has(categoryId)) {
-        resultado.set(merchant, categoryId);
-      }
-    }
-
-    return resultado;
+    return extrairJSON<Record<string, string>>(content) ?? {};
   } catch (error) {
+    // Categorização é opcional: falhar aqui não deve impedir a importação.
     console.error("[Groq] Erro ao categorizar transações:", error);
-    return resultado;
+    return {};
   }
 }

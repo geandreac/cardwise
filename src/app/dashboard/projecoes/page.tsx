@@ -8,7 +8,7 @@ import {
 } from "recharts";
 import { useCartoes } from "@/hooks/useCartoes";
 import { supabase } from "@/lib/supabase";
-import { formatMoeda } from "@/lib/utils";
+import { formatMoeda, formatEixoValor } from "@/lib/utils";
 import { Skeleton } from "@/components/compartilhado/Skeleton";
 import { CalendarDays, TrendingDown, CreditCard, DollarSign } from "lucide-react";
 
@@ -159,7 +159,7 @@ export default function ProjecoesPage() {
               <BarChart data={chartData} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
                 <XAxis dataKey="name" tick={{ fill: "#64748b", fontSize: 11 }} axisLine={false} tickLine={false} />
-                <YAxis tickFormatter={(v) => `R$${(v/1000).toFixed(0)}k`} tick={{ fill: "#64748b", fontSize: 11 }} axisLine={false} tickLine={false} width={54} />
+                <YAxis tickFormatter={formatEixoValor} tick={{ fill: "#64748b", fontSize: 11 }} axisLine={false} tickLine={false} width={54} />
                 <Tooltip
                   formatter={(v: any) => [formatMoeda(Number(v)), "Total"]}
                   contentStyle={TOOLTIP_STYLE}

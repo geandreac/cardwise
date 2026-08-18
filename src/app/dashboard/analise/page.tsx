@@ -10,7 +10,7 @@ import {
 } from "recharts";
 import { useAnalytics } from "@/hooks/useAnalytics";
 import { Skeleton } from "@/components/compartilhado/Skeleton";
-import { formatMoeda } from "@/lib/utils";
+import { formatMoeda, formatEixoValor } from "@/lib/utils";
 
 const CARD_COLORS = ["#3b82f6","#10b981","#8b5cf6","#f59e0b","#ef4444","#06b6d4"];
 
@@ -72,7 +72,7 @@ export default function AnalisePage() {
             <LineChart data={porMes} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
               <XAxis dataKey="mes" tick={{ fill: "#64748b", fontSize: 11 }} axisLine={false} tickLine={false} />
-              <YAxis tickFormatter={(v) => `R$${(v/1000).toFixed(0)}k`} tick={{ fill: "#64748b", fontSize: 11 }} axisLine={false} tickLine={false} width={50} />
+              <YAxis tickFormatter={formatEixoValor} tick={{ fill: "#64748b", fontSize: 11 }} axisLine={false} tickLine={false} width={50} />
               <Tooltip formatter={fmtTooltip} contentStyle={TOOLTIP_STYLE} itemStyle={{ color: "#f1f5f9" }} cursor={{ fill: "rgba(255,255,255,0.05)" }} />
               <Line type="monotone" dataKey="valor" stroke="#3b82f6" strokeWidth={2} dot={{ fill: "#3b82f6", r: 3 }} activeDot={{ r: 5 }} />
             </LineChart>
@@ -85,7 +85,7 @@ export default function AnalisePage() {
             <BarChart data={porCategoria} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
               <XAxis dataKey="name" tick={{ fill: "#64748b", fontSize: 10 }} axisLine={false} tickLine={false} />
-              <YAxis tickFormatter={(v) => `R$${(v/1000).toFixed(0)}k`} tick={{ fill: "#64748b", fontSize: 11 }} axisLine={false} tickLine={false} width={50} />
+              <YAxis tickFormatter={formatEixoValor} tick={{ fill: "#64748b", fontSize: 11 }} axisLine={false} tickLine={false} width={50} />
               <Tooltip formatter={fmtTooltip} contentStyle={TOOLTIP_STYLE} itemStyle={{ color: "#f1f5f9" }} cursor={{ fill: "rgba(255,255,255,0.05)" }} />
               <Bar dataKey="valor" radius={[6,6,0,0]}>
                 {porCategoria.map((_, i) => (
@@ -127,7 +127,7 @@ export default function AnalisePage() {
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={porCartao} layout="vertical" margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" horizontal={false} />
-              <XAxis type="number" tickFormatter={(v) => `R$${(v/1000).toFixed(0)}k`} tick={{ fill: "#64748b", fontSize: 11 }} axisLine={false} tickLine={false} />
+              <XAxis type="number" tickFormatter={formatEixoValor} tick={{ fill: "#64748b", fontSize: 11 }} axisLine={false} tickLine={false} />
               <YAxis type="category" dataKey="name" tick={{ fill: "#94a3b8", fontSize: 11 }} axisLine={false} tickLine={false} width={90} />
               <Tooltip formatter={fmtTooltip} contentStyle={TOOLTIP_STYLE} itemStyle={{ color: "#f1f5f9" }} cursor={{ fill: "rgba(255,255,255,0.05)" }} />
               <Bar dataKey="valor" radius={[0,6,6,0]}>

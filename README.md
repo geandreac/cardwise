@@ -23,6 +23,16 @@ Esqueça o preenchimento manual. Arraste o PDF da sua fatura e nossa IA extrai a
 - Data de vencimento e fechamento
 - **Auto-Calibragem:** Se o seu ciclo de fechamento mudar, o CardWise detecta e ajusta suas projeções futuras automaticamente.
 
+**Como funciona por dentro:** o PDF vai direto ao **Gemini**, que lê o arquivo com o
+layout preservado — o que faz funcionar até fatura em colunas e PDF escaneado. Se o
+Gemini falhar, o texto é extraído com `unpdf` e processado pela **Groq**; e se nem
+isso der certo, há um parser determinístico por regex como última linha de defesa.
+
+> ⚠️ **Privacidade:** no *free tier* do Gemini, o Google usa o conteúdo enviado para
+> treinar seus modelos. Como faturas são dados financeiros pessoais, migre para o tier
+> pago se o app for processar faturas de terceiros — custa cerca de R$ 0,02 por fatura
+> e a mudança é só habilitar billing na mesma chave.
+
 ### 📅 Smart Cycle Calendar
 Visualize exatamente quando suas faturas fecham e vencem. O sistema calcula a **"Melhor Data de Compra"** em tempo real, baseando-se no comportamento histórico do seu cartão.
 
@@ -72,9 +82,26 @@ Diferente de apps comuns, o CardWise projeta suas parcelas e gastos recorrentes 
    ```env
    NEXT_PUBLIC_SUPABASE_URL=https://seu-projeto.supabase.co
    NEXT_PUBLIC_SUPABASE_ANON_KEY=sua-chave-anonima
+
+   # IA — leitura de faturas. Gemini é o provedor principal;
+   # a Groq entra como fallback se o Gemini falhar ou ficar sem cota.
+   GEMINI_API_KEY=sua-chave-do-google-ai-studio
+   GROQ_API_KEY=sua-chave-groq
+
+   # Opcionais — só para ajuste fino:
+   # GEMINI_MODEL=gemini-2.5-flash
+   # GROQ_MODELS=openai/gpt-oss-120b,openai/gpt-oss-20b
+   # GROQ_TPM_LIMIT=8000
    ```
 
-3. **Inicie o Dev Server:**
+3. **Valide as chaves de IA:**
+   ```bash
+   npm run check:ia
+   ```
+   Confere se cada chave é válida, quais modelos estão acessíveis e explica o
+   que fazer em cada tipo de erro. Rode sempre que trocar uma chave.
+
+4. **Inicie o Dev Server:**
    ```bash
    npm run dev
    ```

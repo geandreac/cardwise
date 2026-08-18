@@ -10,7 +10,7 @@ import { UploadFaturaModal } from "@/components/faturas/upload-fatura-modal";
 import { EditarTransacaoDialog } from "@/components/transacoes/editar-transacao-dialog";
 import { NovaTransacaoDialog } from "@/components/transacoes/nova-transacao-dialog";
 import { DeleteAllModal } from "@/components/transacoes/delete-all-modal";
-import { formatMoeda } from "@/lib/utils";
+import { formatMoeda, parseDataLocal } from "@/lib/utils";
 import { TransacaoFull } from "@/hooks/useTransacoesFull";
 import { GlobalMonthPicker } from "@/components/compartilhado/GlobalMonthPicker";
 import { ActionsMenu } from "@/components/transacoes/actions-menu";
@@ -26,7 +26,7 @@ import {
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
 function formatData(iso: string) {
-  const d = new Date(iso);
+  const d = parseDataLocal(iso);
   const hoje = new Date();
   const ontem = new Date();
   ontem.setDate(hoje.getDate() - 1);

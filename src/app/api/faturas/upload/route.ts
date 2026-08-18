@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabaseServer";
-import { parseFaturaComGroq } from "@/lib/groq-parse";
+import { extrairFatura } from "@/lib/fatura-extractor";
 import { categorizarTransacoes } from "@/lib/groq-categorize";
 import { generateInstallmentSeries, calculateFingerprint, calculateCompetenceDate } from "@/lib/invoice-utils";
 
@@ -25,12 +25,7 @@ export async function POST(req: NextRequest) {
     }
 
     const arrayBuffer = await file.arrayBuffer();
-
-    const { extractText } = await import("unpdf");
-    const { text: pages } = await extractText(new Uint8Array(arrayBuffer), {
-      mergePages: true,
-    });
-    const text = Array.isArray(pages) ? pages.join("\n") : String(pages);
+    const pdfBytes = new Uint8Array(arrayBuffer);
 
     const supabase = await createServerSupabaseClient();
 
@@ -63,23 +58,25 @@ export async function POST(req: NextRequest) {
     }
 
     let parsed;
-    try {
-      parsed = await parseFaturaComGroq(text);
-    } catch (parseErr: any) {
-      return NextResponse.json(
-        {
-          error: `Falha ao processar a fatura com o Groq: ${parseErr.message}`,
-        },
-        { status: 422 }
-      );
-    }
+    let provedorIA: "gemini" | "groq";
+    let avisoFallback: string | undefined;
 
-    if (!parsed) {
+    try {
+      const extracao = await extrairFatura(pdfBytes);
+      parsed = extracao.fatura;
+      provedorIA = extracao.provedor;
+      avisoFallback = extracao.avisoFallback;
+    } catch (parseErr: any) {
+      const detalhe = String(parseErr?.message ?? "");
+      const ehCota = /rate_limit|tokens per minute|TPM|quota|resource_exhausted/i.test(detalhe);
+
       return NextResponse.json(
         {
-          error: "Falha inesperada ao processar a fatura com o Groq.",
+          error: ehCota
+            ? "Limite de uso da IA atingido no momento. Aguarde um minuto e tente enviar a fatura novamente."
+            : `Não foi possível ler esta fatura automaticamente. Detalhe técnico: ${detalhe}`,
         },
-        { status: 422 }
+        { status: ehCota ? 429 : 422 }
       );
     }
 
@@ -98,40 +95,40 @@ export async function POST(req: NextRequest) {
     
     parsed.reference_month = calculateCompetenceDate(cardData, parsed.closing_date);
 
-    // --- VALIDAÇÃO E FILTRAGEM DE CHECKSUM (RN05) ---
+    // --- VALIDAÇÃO DE CHECKSUM (RN05) ---
     // Filtra negativos e zeros primeiro
     parsed.transactions = parsed.transactions.filter((tx: any) => tx.amount > 0);
 
-    let sumDebits = parsed.transactions.reduce((acc: number, tx: any) => acc + tx.amount, 0);
-    const checksumDiff = sumDebits - parsed.total_amount;
+    const sumDebits = parsed.transactions.reduce((acc: number, tx: any) => acc + tx.amount, 0);
+
+    // A referência correta é a soma das compras DO PERÍODO declarada pela fatura,
+    // não o total a pagar. Numa fatura com saldo anterior vale
+    //   total = saldo anterior − pagamentos + compras,
+    // então comparar a soma das transações com o total acusaria divergência mesmo
+    // numa extração perfeita. Ex. real (Bradesco): compras 1.315,51 e total 1.044,05.
+    const referencia =
+      parsed.period_debits && parsed.period_debits > 0 ? parsed.period_debits : parsed.total_amount;
+    const usouTotalComoReferencia = referencia === parsed.total_amount;
+
+    const checksumDiff = sumDebits - referencia;
     let checksumWarning: string | null = null;
 
-    if (checksumDiff > 0.02) {
-      // SOBRE-EXTRAÇÃO: a IA capturou pagamentos ou duplicatas como débitos.
-      // Estratégia: remover transações que claramente pertencem à seção de pagamentos
-      // (valores que sozinhos empurram a soma acima do total).
-      // Filtramos de forma gulosa: removemos os maiores itens que estejam causando o excesso.
-      const sorted = [...parsed.transactions].sort((a: any, b: any) => b.amount - a.amount);
-      const kept: any[] = [];
-      let runningSum = 0;
-      for (const tx of sorted) {
-        if (runningSum + tx.amount <= parsed.total_amount + 0.02) {
-          kept.push(tx);
-          runningSum += tx.amount;
-        }
-      }
-      // Só aplicar a filtragem se preservarmos a maioria das transações
-      if (kept.length >= parsed.transactions.length * 0.5) {
-        checksumWarning = `Sobre-extração detectada (R$ ${sumDebits.toFixed(2)} > R$ ${parsed.total_amount.toFixed(2)}). ${parsed.transactions.length - kept.length} transação(ões) removidas automaticamente.`;
-        parsed.transactions = kept;
-        sumDebits = runningSum;
-      } else {
-        // Fallback: aceitar tudo e registrar aviso, sem bloquear
-        checksumWarning = `Divergência de checksum (R$ ${sumDebits.toFixed(2)} vs R$ ${parsed.total_amount.toFixed(2)}). Verifique os dados após a importação.`;
-      }
-    } else if (checksumDiff < -0.02) {
-      // SUB-EXTRAÇÃO: parcelas podem ter sido truncadas. Registrar aviso mas não bloquear.
-      checksumWarning = `Extração possivelmente incompleta: soma R$ ${sumDebits.toFixed(2)} < total R$ ${parsed.total_amount.toFixed(2)}. Verifique se todas as transações foram capturadas.`;
+    const fmt = (n: number) => n.toFixed(2);
+
+    if (Math.abs(checksumDiff) > 0.02) {
+      // NUNCA descartar transações automaticamente: o valor extraído pode estar
+      // certo e a referência é que não se aplica (saldo anterior, fatura com
+      // múltiplos portadores, encargos fora do resumo). Apagar lançamentos
+      // legítimos corrompe o histórico financeiro de forma silenciosa e
+      // irrecuperável — o certo é sinalizar e deixar a decisão com o usuário.
+      const sentido = checksumDiff > 0 ? "acima" : "abaixo";
+      const base = usouTotalComoReferencia
+        ? "o total da fatura"
+        : "as compras do período informadas pela fatura";
+
+      checksumWarning =
+        `A soma das transações (R$ ${fmt(sumDebits)}) ficou R$ ${fmt(Math.abs(checksumDiff))} ${sentido} de ${base} ` +
+        `(R$ ${fmt(referencia)}). Nenhum lançamento foi descartado — confira as transações importadas.`;
     }
 
     let cycleAdjusted = false;
@@ -366,6 +363,8 @@ export async function POST(req: NextRequest) {
       cycle_adjusted: cycleAdjusted,
       new_closing_day: pdfClosingDay,
       checksum_warning: checksumWarning,
+      ai_provider: provedorIA,
+      fallback_warning: avisoFallback ?? null,
     });
   } catch (err: any) {
     console.error("[Upload] Erro fatal:", err);

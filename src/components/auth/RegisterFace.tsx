@@ -69,6 +69,8 @@ export function RegisterFace({ onSwitchToLogin }: RegisterFaceProps) {
       // Mensagens amigáveis para erros conhecidos
       if (error.message === "User already registered") {
         setError("Este email já está cadastrado.");
+      } else if (error.message === "Failed to fetch") {
+        setError("Erro de conexão. Verifique sua internet e tente novamente.");
       } else if (error.message.toLowerCase().includes("email") && error.message.toLowerCase().includes("rate")) {
         setError("Muitas tentativas. Aguarde alguns minutos e tente novamente.");
       } else if (error.message.toLowerCase().includes("signup") && error.message.toLowerCase().includes("disabled")) {

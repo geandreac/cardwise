@@ -39,7 +39,15 @@ export function LoginFace({ onSwitchToRegister }: LoginFaceProps) {
       password: data.password,
     });
     if (error) {
-      setError("Email ou senha incorretos.");
+      if (error.message === "Invalid login credentials") {
+        setError("Email ou senha incorretos.");
+      } else if (error.message === "Failed to fetch") {
+        setError("Erro de conexão. Verifique sua internet e tente novamente.");
+      } else if (error.message.toLowerCase().includes("email") && error.message.toLowerCase().includes("confirm")) {
+        setError("Confirme seu email antes de fazer login. Verifique sua caixa de entrada.");
+      } else {
+        setError(`Erro: ${error.message}`);
+      }
       setIsLoading(false);
       return;
     }
