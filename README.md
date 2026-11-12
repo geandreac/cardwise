@@ -126,3 +126,12 @@ Distribuído sob a licença MIT. Veja `LICENSE` para mais informações.
 <p align="center">
   Desenvolvido com ❤️ por <strong>Geandrea</strong>
 </p>
+## Como clonar
+
+```bash
+git clone https://github.com/geandreac/cardwise.git
+cd cardwise
+npm install
+# configure as variáveis de ambiente: Supabase e as chaves de IA (Gemini/Groq)
+npm run dev      # http://localhost:3000
+```
